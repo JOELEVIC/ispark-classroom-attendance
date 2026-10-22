@@ -1,208 +1,119 @@
-Overview sumary 
-Record attendance and cohort management for iSpark
+# Design - iSpark Attendance Tracker
 
-Tech Stack
-Frontend: Angularjs (for its Simplicity in structure compared to react, and component designing )
-Backend: Fast Api (for it's large liabry stack, dependency injection leading to repid development )
-Database: postgrl
-Deployment: Docker
+## 1. Architecture and Domain Model
 
+**Tech Stack:** Angular, FastAPI, PostgreSQL and psycopg 3. Frontend -  jsonAPI backend model, using angular for better achitecture presentation and fastAPI for fast development, inbuilt dependency injection and documentation
 
-Core Definitions
+Core model definitions
 
-Program { name, description }, Cohort { name, startDate, endDate, __Program__}, Trainer { name, [__Cohort__] }, Trainee { name, [__Enrollment__]}, Enrollment { __Trainee__, [__Cohort__]}, Class { __Cohort_, date, topic?}, Attendance { __Trainee__,__Class__,status,date}, AttendanceRate...
-
-
-Features
-
-- Program creation and fetching
-- Cohort creation under a program,cohort listing of a program and single cohort preview
-- Trainers creation and assigning to cohort
-- Trainees creation, enrollment to cohort, re-enrollment of same to other cohort
-- Shedule Class for a cohort, assign trainer to lead, list cohort calsses by date
-- Take attendance for a class, list cohort's trainees and record attendance for each of them in a single submission
-- Correcting of attendance record after initial record
-- Report a cohort, list it's trainees, count of each trainee's status??? and their attendance rate, flag a trainee who's rate is bellow 75%
-- For one trainee in one cohort, show their status for each class in date order
-- For one class's summary, show howmany trianers had each status and those who havnt been marked yet
-- Init Scripts for carefully constructing database schema and seeding
-
-Main system rules
-- Cohort isolation and uniqueness 
-- Attendance can only be recorded for a trainee who is enrolled in that course
-- A class can only be led, and have attendance recorded only by the trainner assigned to that cohort
-- One attendance record per trainee per class per date, if you attempt to reupdate, only the unique record get's reupdated, no duplicate record
-- Fixed attendance statuses, Present, absent, late and excused
-- Dates should make sense, a cohort's end date should after it's start date, a class must fall within it's cohort's dates, attendance cannot be recorded for a class in the future (and limitation to past)
-- A trainee enrolled in two cohorts has two independent attendance histories and two independence attendance rates
-- History is protected, non-mutable, this avoid deleting or editing which could silently remove or corupt records that already exists
-- Every attendance record shows who recorded it and when it was last changed by whom
-
-Ui features
-- Pages for every required features
-- Plain styling, access clarity and usability
-- Taking attendance for a full cohort should be quick on phone-sized screens
-- Error messages must be clear and informative
+- **Program -> Cohort:** A program has many cohorts; each cohort belong to one program. Program { name, description }, Cohort { name, startDate, endDate, __Program__}
+- **Cohort <-> Trainer:** Many-to-many relationship, connects through __cohort_trainer__. Trainer { name, [__Cohort__] }
+- **Trainee ↔ Cohort:** A many-to-many relationship through __enrollment__. A trainee is stored once and may join multiple cohorts.Trainee { name, [__Enrollment__]}, Enrollment { __Trainee__, [__Cohort__]}
+- **Class <-> Trainee:** Attendance records connect trainees to classes and store their status and metadata. Class { __Cohort_, date, topic?}, Attendance { __Trainee__,__Class__,status,date}, 
+AttendanceRate..To be derived
 
 
-Addons/Stretched goals
-- A log of every correction to an attendance record, showing the old status, new status, who changed it and when
-- csv export download a cohort report as csv file
-- csv import to enroll list of trainees into a cohort from uploaded csv, reporting which rows failed and why
-- shedule a repeating pattern of classes in one step, for example, every monday and wednesday for the lenght of the cohort
-- mark a cohort as finished so it is read-only and hidden from the default lists without loosing any data
-- Docker compose that starts the backend, front end with one comand (plus init database creds too )
-- Search and pagination, find trainees by name accross cohorts, with page results
+### Data model
 
-
-Designing entity relationships
-
-Program { name, description }, Cohort { name, description?, startDate, endDate, __Program__}, Trainer { name, [__Cohort__] }, Trainee { name, [__Enrollment__]}, Enrollment { __Trainee__, [__Cohort__]}, Class { __Cohort__, __Trainer__, date, topic}, Attendance { __Trainee__,__Class__,status,date}, AttendanceRate...
-
+```mermaid
 erDiagram
-   
+    PROGRAM ||--o{ COHORT : contains
+    COHORT ||--o{ COHORT_TRAINER : has
+    TRAINER ||--o{ COHORT_TRAINER : assigned
+    COHORT ||--o{ ENROLLMENT : includes
+    TRAINEE ||--o{ ENROLLMENT : enrolls
+    COHORT ||--o{ COHORT_CLASS : schedules
+    TRAINER ||--o{ COHORT_CLASS : leads
+    COHORT_CLASS ||--o{ ATTENDANCE : records
+    TRAINEE ||--o{ ATTENDANCE : receives
+    TRAINER ||--o{ ATTENDANCE : records
 
     PROGRAM {
         int id PK
         string name
         string description
     }
+
     COHORT {
         int id PK
-        int program_id FK PROGRAM.id
+        int program_id FK
         string name
-        string description
         date start_date
         date end_date
     }
+
     TRAINER {
         int id PK
         string name
     }
+
     TRAINEE {
         int id PK
         string name
     }
+
+    COHORT_TRAINER {
+        int cohort_id PK, FK
+        int trainer_id PK, FK
+    }
+
     ENROLLMENT {
         int id PK
-        int trainee_id FK TRAINEE.id
-        int cohort_id FK COHORT.id
+        int trainee_id FK
+        int cohort_id FK
     }
-    COHORT_TRAINER {
-        int cohort_=id PK, FK COHORT.id
-        int trainer_id PK, FK TRAINER.id
-    }
-    CLASS {
+
+    COHORT_CLASS {
         int id PK
-        int cohort_id FK COHORT.id
-        int trainer_id FK TRAINER.id
+        int cohort_id FK
+        int trainer_id FK
         date class_date
         string topic
     }
+
     ATTENDANCE {
         int id PK
-        int class_id FK CLASS.id
-        int trainee_id FK TRAINEE.id
-        ATTENDANCE_STATUS status
-        date day
+        int class_id FK
+        int trainee_id FK
+        string status
+        int recorded_by FK
+        int last_changed_by FK
+        datetime created_at
+        datetime updated_at
     }
-
-    ATTENDANCE_STATUS {
-        PRESENT,ABSENT,LATE,EXCUSED
-    }
+```
 
 
+## 2. Business-Rule Enforcement
+| Rule | Enforcement |
+| --- | --- |
+| Cohort isolation and independent histories | Scope roster, class, history and report queries to the relevant cohort. |
+| Attendance only for enrolled trainees | Backend validation before writing attendance; using transaction for batch submissions. | 
+| Oly assigned trainers may lead classes or record attendance | Validate trainer membership in __cohort_trainer__ in the backend. |
+| One attendance record per trainee per class | PostgreSQL `UNIQUE(class_id, trainee_id); repeated sumbmissions update the existing record. | 
+| Fixed attendance status | PostgreSQL `CHECK` constraint or enum, plus backend validation. |
+| Valid cohort and class dates | Backend validation and database constraints where practical. Reject attendance for future-dated classes in the backend. |
+| Protect attendance history | Foreign-key restrictions and controlled update/delete operations; permit legitimate attendance corrections. |
+| Recording metadata | Store the recording trainer and creation/update timestamps and the last-changing trainer. |
 
+Using parameters for SQL queries. Running batch attendance writes in transaction to prevent partial submission
 
-Features design, and rules application
+## 3. Attendance Rate
 
-Constraint: names and descriptions have text ranges of 2 - 150 and 0 - 2000 respectively, this is aimed at stable functionalities and unnecesary overdose of data
+Rate is derived separately for each trainee in each cohort:
 
-1. Program creation and fetching -> 
+**Rate = (Present + Late) / (Present + Late + Absent - Excused) * 100**
 
-    createProgram( name, description?)
-     - 
-    getProgram(id)
-    
-    getPrograms()
+Excluding excused classes from the denominator avoids unfair calculation. No countable classes results in rate = N/A. Trainee is flagged when calculated rate is below 75%
 
-2. Cohort creation under a program,cohort listing of a program and single cohort preview -> 
+## 4. Assumptions
 
-    createCohort( program_id, name, description? ) 
+- A trainee is represented by one system-wide record and can be enrolled in multiple cohorts.
+- A trainer may teach across programs and cohorts as long as they're assigned to.
+- Attendance corrections have no time limit, and will be restricted to the start and end of a cohort
+Attendance history is protected against accidental loss, but valid corrections remain possible.
+- The attendance rate is calculated from saved attendance records rather than stored as separate entity.
 
-    getCohort( id )
+## 5. Next Steps/pending
 
-3. Trainers creation and assigning to cohort -> 
-
-    createTrainer( name ) 
-    
-    assignCohortToTrainer( trainer_id, cohort_id )
-
-4. Trainees creation, enrollment to cohort, re-enrollment of same to other cohort -> 
-
-    createTrainee( name ) 
-    
-    enrollTraineeToCohort( trainee_id, cohort_id)
-
-5. Shedule Class for a cohort, assign trainer to lead, list cohort calsses by date -> 
-
-    scheduleAClass( classname, cohort_id, trainer_lead_id? ) 
-
-    assignTrainerToLeadCohort( trainer_id, cohort_id ) 
-    
-    listCohortClassesByDate( date )
-
-6. Take attendance for a class, list cohort's trainees and record attendance for each of them in a single submission -> 
-
-    recordSingleAttendance( class_id, trainer_id, trainee_id, attendance_status, date) 
-    
-    recordBatchAttendance( attendance_record_dto: [ class_id, trainer_id, trainee_id, attendance_status, date ])
-
-7. Correcting of attendance record after initial record -> 
-
-    correctTraineeAttendance( class_id, trainee_id, date? )
-
-8. Report a cohort, list it's trainees, count of each trainee's status??? and their attendance rate, flag a trainee who's rate is bellow 75% -> 
-    
-    reportCohort (cohort_id ) 
-    
-    listCohortTrainees ( cohort_id ) 
-    
-    countTraineeStatus( ... )/unclear yet 
-    
-    getTraineeAttendanceRate( ... )?/unlear yet
-
-9. For one trainee in one cohort, show their status for each class in date order -> 
-    
-    getTraineeClassessStatusOrderByDate( cohort_id, trainee_id, asc? = true)
-
-10. For one class's summary, show howmany trianers had each status and those who havnt been marked yet -> 
-    
-    reportClassSummary( class_id )
-
-11.  Init Scripts for carefully constructing database schema and seeding -> 
-    
-    detectDBReadiness() 
-    
-    initializeTables() 
-    
-    applyConstraintsAndRelationships() 
-    
-    seedTables() 
-    
-    destroyDB() 
-    
-    initializeDB()
-
-12. Tests -> 
-
-standing by rulles
-    - Cohort isolation and uniqueness 
-    - Attendance can only be recorded for a trainee who is enrolled in that course
-    - A class can only be led, and have attendance recorded only by the trainner assigned to that cohort
-    - One attendance record per trainee per class per date, if you attempt to reupdate, only the unique record get's reupdated, no duplicate record
-    - Fixed attendance statuses, Present, absent, late and excused
-    - Dates should make sense, a cohort's end date should after it's start date, a class must fall within it's cohort's dates, attendance cannot be recorded for a class in the future (and limitation to past)
-    - A trainee enrolled in two cohorts has two independent attendance histories and two independence attendance rates
-    - History is protected, non-mutable, this avoid deleting or editing which could silently remove or corupt records that already exists
-    - Every attendance record shows who recorded it and when it was last changed by whom
+With more time, I would add a correction audit log, CSV import/export, recurring classes, cohort archiving, search and pagination, and a Docker Compose workflow. I would also expand automated tess for business rules and concurrent attendance submissions.
