@@ -2,7 +2,7 @@
 
 ## 1. Architecture and Domain Model
 
-**Tech Stack:** Angular, FastAPI, PostgreSQL and psycopg 3. Frontend -  jsonAPI backend model, using angular for better achitecture presentation and fastAPI for fast development, inbuilt dependency injection and documentation
+**Tech Stack:** Angular, FastAPI, PostgreSQL and psycopg 3. Frontend -  jsonAPI backend model, using angular for better ui code achitecture bootstrap presentation and fastAPI for providing request validation and automatic API documentation alongside dependency injection.
 
 Core model definitions
 
@@ -102,7 +102,7 @@ Using parameters for SQL queries. Running batch attendance writes in transaction
 
 Rate is derived separately for each trainee in each cohort:
 
-**Rate = (Present + Late) / (Present + Late + Absent - Excused) * 100**
+**Rate = (Present + Late) / (Present + Late + Absent) * 100**
 
 Excluding excused classes from the denominator avoids unfair calculation. No countable classes results in rate = N/A. Trainee is flagged when calculated rate is below 75%
 
@@ -110,7 +110,7 @@ Excluding excused classes from the denominator avoids unfair calculation. No cou
 
 - A trainee is represented by one system-wide record and can be enrolled in multiple cohorts.
 - A trainer may teach across programs and cohorts as long as they're assigned to.
-- Attendance corrections have no time limit, and will be restricted to the start and end of a cohort
+- Attendance corrections have no time limit.
 Attendance history is protected against accidental loss, but valid corrections remain possible.
 - The attendance rate is calculated from saved attendance records rather than stored as separate entity.
 
