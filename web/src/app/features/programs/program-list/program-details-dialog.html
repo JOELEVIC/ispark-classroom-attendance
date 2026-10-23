@@ -1,0 +1,26 @@
+<section class="details-dialog" aria-labelledby="program-details-heading">
+  <header class="details-header">
+    <span class="details-icon">
+      <mat-icon fontSet="material-symbols-outlined">library_books</mat-icon>
+    </span>
+    <button
+      mat-icon-button
+      mat-dialog-close
+      aria-label="Close program details"
+    >
+      <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+    </button>
+  </header>
+
+  <mat-dialog-content>
+    <h2 id="program-details-heading">{{ program.name }}</h2>
+    <p class="description-label">Description</p>
+    <p class="program-description">
+      {{ program.description || 'No description provided.' }}
+    </p>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-flat-button mat-dialog-close>Done</button>
+  </mat-dialog-actions>
+</section>

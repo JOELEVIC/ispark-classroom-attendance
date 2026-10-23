@@ -1,19 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { NewProgramDialog } from './new-program-dialog';
-import { MockData, MockProgram } from '../../../core/mock-data';
+import { Program, ProgramApiService } from './program-api.service';
+import { ProgramDetailsDialog } from './program-details-dialog';
 
 @Component({
   imports: [
     FormsModule,
     MatButtonModule,
-    MatCardModule,
     MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
@@ -25,32 +24,39 @@ import { MockData, MockProgram } from '../../../core/mock-data';
 })
 export class ProgramList {
   private readonly dialog = inject(MatDialog);
-  protected readonly data = inject(MockData);
+  private readonly programApi = inject(ProgramApiService);
+  protected readonly programs = signal<Program[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
 
   protected searchTerm = '';
 
-  protected get filteredPrograms(): (MockProgram & {
-    cohort_count: number;
-    trainee_count: number;
-  })[] {
+  constructor() {
+    this.loadPrograms();
+  }
+
+  protected get filteredPrograms(): Program[] {
     const query = this.searchTerm.trim().toLocaleLowerCase();
-    return this.data.programs
-      .map((program) => {
-        const cohorts = this.data.cohorts.filter(
-          (cohort) => cohort.programId === program.id,
-        );
-        return {
-          ...program,
-          cohort_count: cohorts.length,
-          trainee_count: cohorts.reduce(
-            (sum, cohort) => sum + this.data.traineesFor(cohort.id).length,
-            0,
-          ),
-        };
-      })
-      .filter((program) =>
-        program.name.toLocaleLowerCase().includes(query),
-      );
+    return this.programs().filter((program) =>
+      program.name.toLocaleLowerCase().includes(query),
+    );
+  }
+
+  protected loadPrograms(): void {
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.programApi.list().subscribe({
+      next: (programs) => {
+        this.programs.set(programs);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to load programs', error);
+        this.errorMessage.set("Couldn't load programs. Please try again.");
+        this.loading.set(false);
+      },
+    });
   }
 
   protected openNewProgramDialog(): void {
@@ -59,6 +65,20 @@ export class ProgramList {
         width: '460px',
         maxWidth: '95vw',
         autoFocus: 'first-tabbable',
+      })
+      .afterClosed()
+      .subscribe((program: Program | undefined) => {
+        if (program) {
+          this.programs.update((programs) => [...programs, program]);
+        }
       });
+  }
+
+  protected openProgramDetails(program: Program): void {
+    this.dialog.open(ProgramDetailsDialog, {
+      width: '460px',
+      maxWidth: '95vw',
+      data: program,
+    });
   }
 }

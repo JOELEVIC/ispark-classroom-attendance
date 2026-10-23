@@ -21,6 +21,10 @@ npm start
 
 The app is available at `http://localhost:4200/`. The proxy keeps browser
 requests same-origin, avoiding local CORS configuration.
+Frontend code should use the relative `/api` base URL, not a hard-coded
+`localhost:<port>` URL. After changing `proxy.conf.json` or its Angular serve
+configuration, stop and restart `ng serve`; refreshing the page does not reload
+the proxy configuration.
 
 The production environment also uses `/api` as its base URL. Configure the
 production web server or ingress to forward `/api/*` to the FastAPI service
@@ -29,11 +33,8 @@ while removing the `/api` prefix (for example, map `/api/programs/` to
 cross-origin requests. Update `src/environments/environment.ts` if production
 uses a different API base URL.
 
-Only the home dashboard currently reads from FastAPI; the other screens still
-use shared in-memory demo data. Dashboard metrics include the total number of
-programs, cohorts, and trainees. Average attendance is the weighted percentage
-of present and late records among present, late, and absent records; excused
-records are excluded. It displays `—` until attendance records exist.
+The Programs page uses FastAPI to list and create programs. Other screens still
+use shared in-memory demo data.
 
 ## Code scaffolding
 

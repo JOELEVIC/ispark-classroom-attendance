@@ -7,8 +7,7 @@
       aria-label="Add new program"
       (click)="openNewProgramDialog()"
     >
-      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-      <span class="add-label">Add Program</span>
+      <span class="plus-glyph" aria-hidden="true">+</span>
     </button>
   </header>
 
@@ -34,42 +33,69 @@
     }
   </mat-form-field>
 
-  @if (filteredPrograms.length) {
+  @if (loading()) {
+    <div class="message-state" role="status">Loading programs...</div>
+  } @else if (errorMessage()) {
+    <div class="message-state" role="alert">
+      <p>{{ errorMessage() }}</p>
+      <button mat-stroked-button type="button" (click)="loadPrograms()">
+        Retry
+      </button>
+    </div>
+  } @else if (filteredPrograms.length) {
     <div class="program-list">
       @for (program of filteredPrograms; track program.id) {
-        <mat-card class="program-card">
+        <button
+          class="program-card"
+          type="button"
+          [attr.aria-label]="'View program: ' + program.name"
+          (click)="openProgramDetails(program)"
+        >
           <span class="program-icon">
             <mat-icon fontSet="material-symbols-outlined">library_books</mat-icon>
           </span>
           <div class="program-copy">
             <h2>{{ program.name }}</h2>
-            <p>
-              {{ program.cohort_count }}
-              {{ program.cohort_count === 1 ? 'cohort' : 'cohorts' }}
-              <span aria-hidden="true">·</span>
-              {{ program.trainee_count }}
-              {{ program.trainee_count === 1 ? 'trainee' : 'trainees' }}
-            </p>
           </div>
           <mat-icon class="program-chevron" fontSet="material-symbols-outlined">
             chevron_right
           </mat-icon>
-        </mat-card>
-      }
-    </div>
-  } @else {
-    <div class="message-state">
-      <mat-icon fontSet="material-symbols-outlined">
-        {{ searchTerm ? 'search_off' : 'library_books' }}
-      </mat-icon>
-      <p>
-        {{ searchTerm ? 'No programs match your search.' : 'No programs yet.' }}
-      </p>
-      @if (!searchTerm) {
-        <button mat-stroked-button type="button" (click)="openNewProgramDialog()">
-          Create your first program
         </button>
       }
     </div>
+  } @else if (searchTerm.trim()) {
+    <section class="empty-state search-empty-state" aria-live="polite">
+      <span class="empty-state-icon search-icon">
+        <mat-icon fontSet="material-symbols-outlined">search_off</mat-icon>
+      </span>
+      <h2>No matching programs</h2>
+      <p>Try a different search term or clear your search.</p>
+      <button
+        mat-stroked-button
+        type="button"
+        (click)="searchTerm = ''"
+      >
+        Clear search
+      </button>
+    </section>
+  } @else {
+    <section class="empty-state" aria-labelledby="empty-programs-heading">
+      <span class="empty-state-icon">
+        <mat-icon fontSet="material-symbols-outlined">library_add</mat-icon>
+      </span>
+      <h2 id="empty-programs-heading">No programs yet</h2>
+      <p>
+        Create your first program to start organizing cohorts and trainees.
+      </p>
+      <button
+        class="empty-state-action"
+        mat-flat-button
+        type="button"
+        (click)="openNewProgramDialog()"
+      >
+        <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+        Create your first program
+      </button>
+    </section>
   }
 </section>
