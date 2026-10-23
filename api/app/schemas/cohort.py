@@ -1,16 +1,23 @@
 from datetime import date
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
-class CohortClassCreate(BaseModel):
-    trainer_id: int = Field(gt=0)
-    class_date: date
-    topic: str = Field(min_length=2, max_length=200)
+class CohortCreate(BaseModel):
+    program_id: int = Field(gt=0)
+    name: str = Field(min_length=2, max_length=150)
+    start_date: date
+    end_date: date
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.end_date <= self.start_date:
+            raise ValueError("End date must be after start date")
+        return self
 
 
-class CohortClassRespond(BaseModel):
+class CohortRespond(BaseModel):
     id: int
-    cohort_id: int
-    trainer_id: int
-    class_date: date
-    topic: str
+    program_id: int
+    name: str
+    start_date: date
+    end_date: date
