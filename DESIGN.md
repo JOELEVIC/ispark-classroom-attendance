@@ -90,7 +90,7 @@ erDiagram
 | Cohort isolation and independent histories | Scope roster, class, history and report queries to the relevant cohort. |
 | Attendance only for enrolled trainees | Backend validation before writing attendance; using transaction for batch submissions. | 
 | Oly assigned trainers may lead classes or record attendance | Validate trainer membership in __cohort_trainer__ in the backend. |
-| One attendance record per trainee per class | PostgreSQL `UNIQUE(class_id, trainee_id); repeated sumbmissions update the existing record. | 
+| One attendance record per trainee per class | PostgreSQL `UNIQUE(class_id, trainee_id);` repeated sumbmissions update the existing record. | 
 | Fixed attendance status | PostgreSQL `CHECK` constraint or enum, plus backend validation. |
 | Valid cohort and class dates | Backend validation and database constraints where practical. Reject attendance for future-dated classes in the backend. |
 | Protect attendance history | Foreign-key restrictions and controlled update/delete operations; permit legitimate attendance corrections. |
