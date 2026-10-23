@@ -4,7 +4,11 @@
     <p>Here's what's happening with your programs.</p>
   </header>
 
-  <section class="stats-grid" aria-label="Program overview">
+  <section
+    class="stats-grid"
+    aria-label="Program overview"
+    [attr.aria-busy]="loading"
+  >
     @for (stat of stats; track stat.label) {
       <mat-card class="stat-card">
         <span class="stat-icon" [class]="'stat-icon ' + stat.color">
@@ -17,6 +21,13 @@
       </mat-card>
     }
   </section>
+
+  @if (errorMessage) {
+    <div class="dashboard-error" role="alert">
+    <span>{{ errorMessage }}</span>
+    <button type="button" (click)="loadStats()">Retry</button>
+    </div>
+  }
 
   <div class="action-area">
     <a class="attendance-card" routerLink="/attendance">

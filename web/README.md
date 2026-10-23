@@ -2,18 +2,38 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.4.
 
-## Development server
+## API connection
 
-To start a local development server, run:
+Angular calls the API through `/api`. During local development, `ng serve`
+uses `proxy.conf.json` to forward those requests to FastAPI at
+`http://127.0.0.1:8000` and removes the `/api` prefix. Start FastAPI from the
+`api` directory with:
 
 ```bash
-ng serve
+uvicorn app.main:app --reload
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Then start the frontend from this directory:
 
-The current frontend screens use shared in-memory demo data and do not require the API.
-Changes made in the app are temporary and reset when the page is reloaded.
+```bash
+npm start
+```
+
+The app is available at `http://localhost:4200/`. The proxy keeps browser
+requests same-origin, avoiding local CORS configuration.
+
+The production environment also uses `/api` as its base URL. Configure the
+production web server or ingress to forward `/api/*` to the FastAPI service
+while removing the `/api` prefix (for example, map `/api/programs/` to
+`/programs/`). This keeps the API host out of the frontend bundle and avoids
+cross-origin requests. Update `src/environments/environment.ts` if production
+uses a different API base URL.
+
+Only the home dashboard currently reads from FastAPI; the other screens still
+use shared in-memory demo data. Dashboard metrics include the total number of
+programs, cohorts, and trainees. Average attendance is the weighted percentage
+of present and late records among present, late, and absent records; excused
+records are excluded. It displays `—` until attendance records exist.
 
 ## Code scaffolding
 

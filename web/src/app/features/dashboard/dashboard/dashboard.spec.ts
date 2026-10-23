@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { Dashboard } from './dashboard';
+import { DashboardApiService } from './dashboard-api.service';
 
 describe('Dashboard', () => {
   let component: Dashboard;
@@ -9,7 +11,21 @@ describe('Dashboard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: DashboardApiService,
+          useValue: {
+            getStats: () =>
+              of({
+                programs: 3,
+                cohorts: 5,
+                trainees: 24,
+                averageAttendance: 76.4,
+              }),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Dashboard);
@@ -28,5 +44,14 @@ describe('Dashboard', () => {
 
     expect(link.textContent).toContain('Take Attendance');
     expect(link.getAttribute('href')).toBe('/attendance');
+  });
+
+  it('should display dashboard counts from the API', () => {
+    const dashboardElement = fixture.nativeElement as HTMLElement;
+    const values = Array.from(
+      dashboardElement.querySelectorAll('.stat-copy strong'),
+    ).map((element) => element.textContent);
+
+    expect(values).toEqual(['3', '5', '24', '76%']);
   });
 });

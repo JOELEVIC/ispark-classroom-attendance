@@ -103,6 +103,20 @@
   font-size: 14px;
 }
 
+.dashboard-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border: 1px solid #f1c5c5;
+  border-radius: 10px;
+  color: #8a2424;
+  background: #fff4f4;
+  font-size: 14px;
+}
+
 .action-area {
   display: grid;
   flex: 1;
