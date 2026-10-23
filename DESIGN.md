@@ -2,7 +2,7 @@
 
 ## 1. Architecture and Domain Model
 
-**Tech Stack:** Angular, FastAPI, PostgreSQL and psycopg 3. Frontend -  jsonAPI backend model, using angular for better ui code achitecture bootstrap presentation and fastAPI for providing request validation and automatic API documentation alongside dependency injection.
+**Tech Stack:** Angular, FastAPI, PostgreSQL and psycopg 3. Frontend -  jsonAPI backend model, using angular for better ui code achitecture bootstrap presentation and fastAPI for providing request validation and automatic API documentation alongside dependency injection. psycopg 3, it's the modern PostgreSQL adapter python, improved static typing support and works well with handwritten sql without ORM
 
 Core model definitions
 

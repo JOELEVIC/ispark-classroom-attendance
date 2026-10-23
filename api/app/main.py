@@ -1,9 +1,7 @@
 
 
-from fastapi import FASTAPI
+from fastapi import FastAPI, HTTPException, status, Path
+from typing import Optional
+from pydantic import BaseModel
 
-app = FASTAPI()
-
-@app.get("/")
-def root(): 
-    return {"message":" Hello there "}
+app = FastAPI()
