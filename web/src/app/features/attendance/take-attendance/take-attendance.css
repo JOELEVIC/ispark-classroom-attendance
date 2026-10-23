@@ -265,10 +265,10 @@
 
   .mobile-save {
     position: sticky;
-    bottom: 78px;
+    bottom: calc(var(--mobile-nav-height, 72px) + 12px);
     z-index: 2;
     display: block;
-    padding: 12px 0;
+    padding: 12px 0 6px;
     background: linear-gradient(transparent, #f7f9fc 25%);
   }
 

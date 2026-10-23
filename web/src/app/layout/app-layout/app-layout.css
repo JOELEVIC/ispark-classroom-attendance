@@ -1,4 +1,6 @@
 :host {
+  --mobile-nav-height: 0px;
+
   display: block;
   min-height: 100dvh;
 }
@@ -90,6 +92,10 @@
     padding: 0 16px;
   }
 
+  :host {
+    --mobile-nav-height: calc(72px + env(safe-area-inset-bottom));
+  }
+
   .mobile-menu {
     display: inline-flex;
     margin-left: -8px;
@@ -107,8 +113,8 @@
 
   .page-content {
     width: 100%;
-    min-height: calc(100dvh - 128px);
-    padding: 28px 20px 32px;
+    min-height: calc(100dvh - 64px - var(--mobile-nav-height));
+    padding: 28px 20px calc(var(--mobile-nav-height) + 24px);
   }
 
   .mobile-navigation {
@@ -119,7 +125,7 @@
     z-index: 10;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    min-height: 72px;
+    height: var(--mobile-nav-height);
     padding: 6px 8px max(6px, env(safe-area-inset-bottom));
     border-top: 1px solid #e5ebf3;
     background: #fff;

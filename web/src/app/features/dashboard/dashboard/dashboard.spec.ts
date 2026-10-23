@@ -22,11 +22,11 @@ describe('Dashboard', () => {
   });
 
   it('should link to the attendance page', () => {
-    const button = fixture.nativeElement.querySelector(
-      '.attendance-button',
+    const link = fixture.nativeElement.querySelector(
+      '.attendance-card',
     ) as HTMLAnchorElement;
 
-    expect(button.textContent).toContain('Take Attendance');
-    expect(button.getAttribute('href')).toBe('/attendance');
+    expect(link.textContent).toContain('Take Attendance');
+    expect(link.getAttribute('href')).toBe('/attendance');
   });
 });

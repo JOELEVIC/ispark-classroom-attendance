@@ -18,8 +18,18 @@
     }
   </section>
 
-  <a mat-flat-button class="attendance-button" routerLink="/attendance">
-    <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
-    Take Attendance
-  </a>
+  <div class="action-area">
+    <a class="attendance-card" routerLink="/attendance">
+      <span class="attendance-card-icon">
+        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+      </span>
+      <span class="attendance-card-copy">
+        <strong>Take Attendance</strong>
+        <span>Mark your trainees for today's class</span>
+      </span>
+      <mat-icon class="attendance-card-arrow" fontSet="material-symbols-outlined">
+        arrow_forward
+      </mat-icon>
+    </a>
+  </div>
 </section>
