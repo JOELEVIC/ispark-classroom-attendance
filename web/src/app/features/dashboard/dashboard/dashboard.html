@@ -1,7 +1,7 @@
 <section class="dashboard" aria-labelledby="welcome-heading">
   <header class="welcome">
-    <h1 id="welcome-heading">Good morning, Joel</h1>
-    <p>Here's what's happening with your programs.</p>
+    <h1 id="welcome-heading">Welcome to iSpark</h1>
+    <p>Your classroom at a glance.</p>
   </header>
 
   <section
@@ -18,6 +18,14 @@
           <strong>{{ stat.value }}</strong>
           <span>{{ stat.label }}</span>
         </div>
+        <a
+          class="stat-link"
+          mat-icon-button
+          [routerLink]="stat.route"
+          [attr.aria-label]="'Go to ' + stat.label"
+        >
+          <mat-icon fontSet="material-symbols-outlined">arrow_forward</mat-icon>
+        </a>
       </mat-card>
     }
   </section>

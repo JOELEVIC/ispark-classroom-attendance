@@ -46,6 +46,25 @@ describe('Dashboard', () => {
     expect(link.getAttribute('href')).toBe('/attendance');
   });
 
+  it('should provide links from each overview card to its feature page', () => {
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.stat-link'),
+    ) as HTMLAnchorElement[];
+
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/programs',
+      '/cohorts',
+      '/trainees',
+      '/attendance',
+    ]);
+    expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+      'Go to Programs',
+      'Go to Cohorts',
+      'Go to Trainees',
+      'Go to Avg. Attendance',
+    ]);
+  });
+
   it('should display dashboard counts from the API', () => {
     const dashboardElement = fixture.nativeElement as HTMLElement;
     const values = Array.from(

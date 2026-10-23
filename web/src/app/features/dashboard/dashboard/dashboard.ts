@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { DashboardApiService, DashboardStats } from './dashboard-api.service';
 
 @Component({
-  imports: [MatCardModule, MatIconModule, RouterLink],
+  imports: [MatButtonModule, MatCardModule, MatIconModule, RouterLink],
   selector: 'app-dashboard',
   styleUrl: './dashboard.css',
   templateUrl: './dashboard.html',
@@ -20,14 +21,28 @@ export class Dashboard {
       value: '—',
       icon: 'library_books',
       color: 'blue',
+      route: '/programs',
     },
-    { label: 'Cohorts', value: '—', icon: 'groups', color: 'green' },
-    { label: 'Trainees', value: '—', icon: 'group', color: 'purple' },
+    {
+      label: 'Cohorts',
+      value: '—',
+      icon: 'groups',
+      color: 'green',
+      route: '/cohorts',
+    },
+    {
+      label: 'Trainees',
+      value: '—',
+      icon: 'group',
+      color: 'purple',
+      route: '/trainees',
+    },
     {
       label: 'Avg. Attendance',
       value: '—',
       icon: 'fact_check',
       color: 'amber',
+      route: '/attendance',
     },
   ];
 

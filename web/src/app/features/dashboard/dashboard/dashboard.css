@@ -34,6 +34,7 @@
 }
 
 .stat-card {
+  position: relative;
   display: flex;
   min-height: 146px;
   flex-direction: row;
@@ -44,6 +45,21 @@
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 2px 8px rgb(19 50 84 / 3%);
+}
+
+.stat-link {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: #2479da;
+}
+
+.stat-link:hover {
+  background: #eef6ff;
+}
+
+.stat-link:focus-visible {
+  outline: 2px solid #1875e5;
+  outline-offset: 2px;
 }
 
 .stat-icon {
@@ -218,7 +234,15 @@
     align-items: flex-start;
     justify-content: center;
     gap: 10px;
-    padding: 14px;
+    padding: 14px 48px 14px 14px;
+  }
+
+  .stat-link {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    margin: 0;
+    transform: translateY(-50%);
   }
 
   .stat-icon {
