@@ -1,1 +1,25 @@
-<p>dashboard works!</p>
+<section class="dashboard" aria-labelledby="welcome-heading">
+  <header class="welcome">
+    <h1 id="welcome-heading">Good morning, Joel</h1>
+    <p>Here's what's happening with your programs.</p>
+  </header>
+
+  <section class="stats-grid" aria-label="Program overview">
+    @for (stat of stats; track stat.label) {
+      <mat-card class="stat-card">
+        <span class="stat-icon" [class]="'stat-icon ' + stat.color">
+          <mat-icon fontSet="material-symbols-outlined">{{ stat.icon }}</mat-icon>
+        </span>
+        <div class="stat-copy">
+          <strong>{{ stat.value }}</strong>
+          <span>{{ stat.label }}</span>
+        </div>
+      </mat-card>
+    }
+  </section>
+
+  <a mat-flat-button class="attendance-button" routerLink="/attendance">
+    <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+    Take Attendance
+  </a>
+</section>

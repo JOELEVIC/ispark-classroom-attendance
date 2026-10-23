@@ -1,0 +1,192 @@
+:host {
+  display: block;
+}
+
+.dashboard {
+  color: #11243c;
+}
+
+.welcome {
+  margin-bottom: 27px;
+}
+
+.welcome h1 {
+  margin: 0 0 7px;
+  font-size: clamp(24px, 3vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.welcome p {
+  margin: 0;
+  color: #74869e;
+  font-size: 15px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  display: flex;
+  min-height: 146px;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid #e4ebf4;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(19 50 84 / 3%);
+}
+
+.stat-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.stat-icon mat-icon {
+  width: 23px;
+  height: 23px;
+  font-size: 23px;
+}
+
+.blue {
+  color: #1476ed;
+  background: #e1efff;
+}
+
+.green {
+  color: #078647;
+  background: #ddf7e9;
+}
+
+.purple {
+  color: #7844dd;
+  background: #eee5ff;
+}
+
+.amber {
+  color: #c48500;
+  background: #fff2cf;
+}
+
+.stat-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-copy strong {
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.stat-copy span {
+  color: #586d86;
+  font-size: 14px;
+}
+
+.attendance-button {
+  min-height: 48px;
+  margin-top: 28px;
+  padding: 0 22px;
+  border-radius: 10px;
+  color: #fff !important;
+  background: #1875e5;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.attendance-button mat-icon {
+  margin-right: 8px;
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .stat-card {
+    min-height: 136px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-icon mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  .stat-copy {
+    gap: 4px;
+  }
+
+  .stat-copy strong {
+    font-size: 24px;
+  }
+
+  .stat-copy span {
+    font-size: 13px;
+  }
+
+  .attendance-button {
+    width: 100%;
+    margin-top: 24px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .stat-card {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 420px) {
+  .welcome {
+    margin-bottom: 24px;
+  }
+
+  .welcome h1 {
+    font-size: 24px;
+  }
+
+  .welcome p {
+    font-size: 14px;
+  }
+
+  .stat-card {
+    min-height: 132px;
+  }
+
+}
