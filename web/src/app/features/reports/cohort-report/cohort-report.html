@@ -7,170 +7,200 @@
     <mat-form-field class="cohort-select" appearance="outline">
       <mat-label>Cohort</mat-label>
       <mat-select [(ngModel)]="cohortId" (selectionChange)="onCohortChange()">
-        @for (cohort of data.cohorts; track cohort.id) {
+        @for (cohort of cohorts(); track cohort.id) {
           <mat-option [value]="cohort.id">
-            {{ programName(cohort.programId) }} · {{ cohort.name }}
+            {{ cohort.programName }} · {{ cohort.name }}
           </mat-option>
         }
       </mat-select>
     </mat-form-field>
   </header>
 
-  <div class="report-context">
-    <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
-    <span>{{ cohortName }}</span>
-    <span class="context-separator">·</span>
-    <span>{{ trainees.length }} trainees</span>
-    <span class="context-separator">·</span>
-    <span>{{ classes.length }} classes</span>
-  </div>
+  @if (loadError()) {
+    <div class="report-error" role="alert">{{ loadError() }}</div>
+  }
 
-  <mat-card class="rate-note">
-    <mat-icon fontSet="material-symbols-outlined">info</mat-icon>
-    <p>Attendance rate counts Present and Late as attended. Excused classes are excluded from the rate.</p>
-  </mat-card>
-
-  <section class="report-section" aria-labelledby="trainee-report-heading">
-    <div class="section-heading">
-      <div>
-        <h2 id="trainee-report-heading">Trainee attendance</h2>
-        <p>Select a trainee to view their class-by-class history.</p>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Trainee</th>
-            <th scope="col">Present</th>
-            <th scope="col">Absent</th>
-            <th scope="col">Late</th>
-            <th scope="col">Excused</th>
-            <th scope="col">Rate</th>
-            <th scope="col"><span class="visually-hidden">History</span></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows; track row.trainee.id) {
-            <tr [class.selected-row]="selectedTraineeId === row.trainee.id">
-              <td class="trainee-cell">
-                <span class="table-avatar">{{ row.trainee.name.slice(0, 1) }}</span>
-                <span>{{ row.trainee.name }}</span>
-              </td>
-              <td>{{ row.present }}</td>
-              <td>{{ row.absent }}</td>
-              <td>{{ row.late }}</td>
-              <td>{{ row.excused }}</td>
-              <td>
-                @if (row.rate === null) {
-                  <span class="rate-na">N/A</span>
-                } @else {
-                  <span class="rate-pill" [class.low-rate]="row.rate < 75">
-                    {{ row.rate | number: '1.0-0' }}%
-                  </span>
-                  @if (row.rate < 75) {
-                    <span class="below-label">Below 75%</span>
-                  }
-                }
-              </td>
-              <td>
-                <button
-                  mat-icon-button
-                  [attr.aria-label]="'View ' + row.trainee.name + ' history'"
-                  (click)="selectedTraineeId = selectedTraineeId === row.trainee.id ? null : row.trainee.id"
-                >
-                  <mat-icon fontSet="material-symbols-outlined">
-                    {{ selectedTraineeId === row.trainee.id ? 'expand_less' : 'history' }}
-                  </mat-icon>
-                </button>
-              </td>
-            </tr>
-            @if (selectedTraineeId === row.trainee.id) {
-              <tr class="history-row">
-                <td colspan="7">
-                  <div class="history-content">
-                    <h3>{{ row.trainee.name }} · class history</h3>
-                    @for (classItem of classes; track classItem.id) {
-                      <div class="history-item">
-                        <span>{{ classItem.date | date: 'MMM d, y' }}</span>
-                        <strong>{{ classItem.topic }}</strong>
-                        <span
-                          class="status-pill"
-                          [class]="'status-pill ' + (historyStatus(classItem) ?? 'unmarked')"
-                        >
-                          {{ statusText(historyStatus(classItem)) }}
-                        </span>
-                      </div>
-                    } @empty {
-                      <p>No classes are scheduled for this cohort.</p>
-                    }
-                  </div>
-                </td>
-              </tr>
-            }
-          } @empty {
-            <tr><td class="empty-cell" colspan="7">No trainees enrolled in this cohort.</td></tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section class="report-section class-summary-section" aria-labelledby="class-summary-heading">
-    <div class="section-heading">
-      <div>
-        <h2 id="class-summary-heading">Class summary</h2>
-        <p>Attendance totals and trainees still to be marked.</p>
-      </div>
-      <mat-form-field appearance="outline">
-        <mat-label>Select a class</mat-label>
-        <mat-select [(ngModel)]="selectedClassId">
-          @for (classItem of classes; track classItem.id) {
-            <mat-option [value]="classItem.id">
-              {{ classItem.date | date: 'MMM d' }} · {{ classItem.topic }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+  @if (!loading() && cohortId !== null) {
+    <div class="report-context">
+      <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
+      <span>{{ cohortName }}</span>
+      <span class="context-separator">·</span>
+      <span>{{ trainees().length }} trainees</span>
+      <span class="context-separator">·</span>
+      <span>{{ classes().length }} classes</span>
     </div>
 
-    @if (selectedClass) {
-      <mat-card class="summary-card">
-        <div class="summary-title">
+    <mat-card class="rate-note">
+      <mat-icon fontSet="material-symbols-outlined">info</mat-icon>
+      <p>
+        Attendance rate counts Present and Late as attended. Excused classes are excluded from the
+        rate.
+      </p>
+    </mat-card>
+
+    @if (reportLoading()) {
+      <p class="report-state" role="status">Loading cohort report...</p>
+    } @else {
+      <section class="report-section" aria-labelledby="trainee-report-heading">
+        <div class="section-heading">
           <div>
-            <h3>{{ selectedClass.topic }}</h3>
-            <p>{{ selectedClass.date | date: 'EEEE, MMMM d, y' }}</p>
+            <h2 id="trainee-report-heading">Trainee attendance</h2>
+            <p>Select a trainee to view their class-by-class history.</p>
           </div>
         </div>
-        <div class="summary-counts">
-          <div class="count-tile present">
-            <strong>{{ statusCount('present') }}</strong><span>Present</span>
-          </div>
-          <div class="count-tile absent">
-            <strong>{{ statusCount('absent') }}</strong><span>Absent</span>
-          </div>
-          <div class="count-tile late">
-            <strong>{{ statusCount('late') }}</strong><span>Late</span>
-          </div>
-          <div class="count-tile excused">
-            <strong>{{ statusCount('excused') }}</strong><span>Excused</span>
-          </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Trainee</th>
+                <th scope="col">Present</th>
+                <th scope="col">Absent</th>
+                <th scope="col">Late</th>
+                <th scope="col">Excused</th>
+                <th scope="col">Rate</th>
+                <th scope="col"><span class="visually-hidden">History</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.trainee.id) {
+                <tr [class.selected-row]="selectedTraineeId === row.trainee.id">
+                  <td class="trainee-cell">
+                    <span class="table-avatar">{{ row.trainee.name.slice(0, 1) }}</span>
+                    <span>{{ row.trainee.name }}</span>
+                  </td>
+                  <td>{{ row.present }}</td>
+                  <td>{{ row.absent }}</td>
+                  <td>{{ row.late }}</td>
+                  <td>{{ row.excused }}</td>
+                  <td>
+                    @if (row.rate === null) {
+                      <span class="rate-na">N/A</span>
+                    } @else {
+                      <span class="rate-pill" [class.low-rate]="row.rate < 75">
+                        {{ row.rate | number: '1.0-0' }}%
+                      </span>
+                      @if (row.rate < 75) {
+                        <span class="below-label">Below 75%</span>
+                      }
+                    }
+                  </td>
+                  <td>
+                    <button
+                      mat-icon-button
+                      [attr.aria-label]="'View ' + row.trainee.name + ' history'"
+                      (click)="toggleHistory(row.trainee.id)"
+                    >
+                      <mat-icon fontSet="material-symbols-outlined">
+                        {{ selectedTraineeId === row.trainee.id ? 'expand_less' : 'history' }}
+                      </mat-icon>
+                    </button>
+                  </td>
+                </tr>
+                @if (selectedTraineeId === row.trainee.id) {
+                  <tr class="history-row">
+                    <td colspan="7">
+                      <div class="history-content">
+                        <h3>{{ row.trainee.name }} · class history</h3>
+                        @if (historyLoading()) {
+                          <p role="status">Loading attendance history...</p>
+                        }
+                        @for (classItem of classes(); track classItem.id) {
+                          <div class="history-item">
+                            <span>{{ classItem.date | date: 'MMM d, y' }}</span>
+                            <strong>{{ classItem.topic }}</strong>
+                            <span
+                              class="status-pill"
+                              [class]="'status-pill ' + (historyStatus(classItem) ?? 'unmarked')"
+                            >
+                              {{ statusText(historyStatus(classItem)) }}
+                            </span>
+                          </div>
+                        } @empty {
+                          <p>No classes are scheduled for this cohort.</p>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              } @empty {
+                <tr>
+                  <td class="empty-cell" colspan="7">No trainees enrolled in this cohort.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
-        <div class="unmarked-list">
-          <h4>Not marked yet <span>{{ unmarkedTrainees().length }}</span></h4>
-          @if (unmarkedTrainees().length) {
-            <div class="unmarked-names">
-              @for (trainee of unmarkedTrainees(); track trainee.id) {
-                <span>{{ trainee.name }}</span>
+      </section>
+
+      <section class="report-section class-summary-section" aria-labelledby="class-summary-heading">
+        <div class="section-heading">
+          <div>
+            <h2 id="class-summary-heading">Class summary</h2>
+            <p>Attendance totals and trainees still to be marked.</p>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Select a class</mat-label>
+            <mat-select [(ngModel)]="selectedClassId" (selectionChange)="onClassChange()">
+              @for (classItem of classes(); track classItem.id) {
+                <mat-option [value]="classItem.id">
+                  {{ classItem.date | date: 'MMM d' }} · {{ classItem.topic }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        @if (summaryLoading()) {
+          <p class="report-state" role="status">Loading class summary...</p>
+        } @else if (selectedClass) {
+          <mat-card class="summary-card">
+            <div class="summary-title">
+              <div>
+                <h3>{{ selectedClass.topic }}</h3>
+                <p>{{ selectedClass.date | date: 'EEEE, MMMM d, y' }}</p>
+              </div>
+            </div>
+            <div class="summary-counts">
+              <div class="count-tile present">
+                <strong>{{ statusCount('present') }}</strong
+                ><span>Present</span>
+              </div>
+              <div class="count-tile absent">
+                <strong>{{ statusCount('absent') }}</strong
+                ><span>Absent</span>
+              </div>
+              <div class="count-tile late">
+                <strong>{{ statusCount('late') }}</strong
+                ><span>Late</span>
+              </div>
+              <div class="count-tile excused">
+                <strong>{{ statusCount('excused') }}</strong
+                ><span>Excused</span>
+              </div>
+            </div>
+            <div class="unmarked-list">
+              <h4>
+                Not marked yet <span>{{ unmarkedTrainees().length }}</span>
+              </h4>
+              @if (unmarkedTrainees().length) {
+                <div class="unmarked-names">
+                  @for (trainee of unmarkedTrainees(); track trainee.id) {
+                    <span>{{ trainee.name }}</span>
+                  }
+                </div>
+              } @else {
+                <p>Everyone in this cohort has been marked.</p>
               }
             </div>
-          } @else {
-            <p>Everyone in this cohort has been marked.</p>
-          }
-        </div>
-      </mat-card>
-    } @else {
-      <div class="empty-summary">No class selected.</div>
+          </mat-card>
+        } @else {
+          <div class="empty-summary">No class selected.</div>
+        }
+      </section>
     }
-  </section>
+  } @else if (!loading()) {
+    <p class="report-state">No cohorts are available for reporting.</p>
+  } @else {
+    <p class="report-state" role="status">Loading reports...</p>
+  }
 </section>

@@ -8,6 +8,22 @@
   color: #11243c;
 }
 
+.report-error {
+  padding: 12px 15px;
+  margin-bottom: 16px;
+  border: 1px solid #f1caca;
+  border-radius: 10px;
+  color: #9c3030;
+  background: #fff3f3;
+  font-size: 13px;
+}
+
+.report-state {
+  padding: 24px;
+  color: #71839a;
+  text-align: center;
+}
+
 .page-heading {
   display: flex;
   align-items: center;
@@ -409,25 +425,25 @@ tbody tr.selected-row {
   }
 
   tbody > tr:not(.history-row) td:nth-child(2)::before {
-    content: "Present ";
+    content: 'Present ';
     color: #8291a3;
     font-size: 10px;
   }
 
   tbody > tr:not(.history-row) td:nth-child(3)::before {
-    content: "Absent ";
+    content: 'Absent ';
     color: #8291a3;
     font-size: 10px;
   }
 
   tbody > tr:not(.history-row) td:nth-child(4)::before {
-    content: "Late ";
+    content: 'Late ';
     color: #8291a3;
     font-size: 10px;
   }
 
   tbody > tr:not(.history-row) td:nth-child(5)::before {
-    content: "Excused ";
+    content: 'Excused ';
     color: #8291a3;
     font-size: 10px;
   }

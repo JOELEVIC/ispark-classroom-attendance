@@ -22,3 +22,19 @@ class TraineeAttendanceHistoryEntry(BaseModel):
     class_date: date
     topic: str
     status: AttendanceStatus
+
+
+class CohortAttendanceReport(BaseModel):
+    cohort_id: int
+    trainees: list[TraineeAttendanceReport]
+
+
+class UnmarkedTrainee(BaseModel):
+    trainee_id: int
+    trainee_name: str
+
+
+class ClassAttendanceSummary(BaseModel):
+    class_id: int
+    counts: AttendanceCounts
+    unmarked_trainees: list[UnmarkedTrainee]
