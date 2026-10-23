@@ -1,0 +1,72 @@
+<section class="dialog-content">
+  <header class="dialog-header">
+    <h2 mat-dialog-title>New Program</h2>
+    <button
+      mat-icon-button
+      mat-dialog-close
+      aria-label="Close new program dialog"
+      [disabled]="submitting"
+    >
+      <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+    </button>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <mat-dialog-content>
+      <mat-form-field appearance="outline">
+        <mat-label>Program name</mat-label>
+        <input
+          matInput
+          formControlName="name"
+          placeholder="e.g. Web Development"
+          autocomplete="off"
+          required
+        />
+        @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+          <mat-error>Program name is required.</mat-error>
+        } @else if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
+          <mat-error>Name must be at least 2 characters.</mat-error>
+        } @else if (form.controls.name.hasError('trimmedMinLength') && form.controls.name.touched) {
+          <mat-error>Name must contain at least 2 non-space characters.</mat-error>
+        } @else if (form.controls.name.hasError('maxlength')) {
+          <mat-error>Name must be 150 characters or fewer.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Description</mat-label>
+        <textarea
+          matInput
+          formControlName="description"
+          placeholder="Brief description..."
+          rows="5"
+        ></textarea>
+        @if (form.controls.description.hasError('maxlength')) {
+          <mat-error>Description must be 2000 characters or fewer.</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage) {
+        <p class="form-error" role="alert">{{ errorMessage }}</p>
+      }
+
+      <button
+        class="create-button"
+        mat-flat-button
+        type="submit"
+        [disabled]="submitting"
+      >
+        {{ submitting ? 'Creating...' : 'Create Program' }}
+      </button>
+      <button
+        class="cancel-button"
+        mat-button
+        type="button"
+        mat-dialog-close
+        [disabled]="submitting"
+      >
+        Cancel
+      </button>
+    </mat-dialog-content>
+  </form>
+</section>

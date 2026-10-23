@@ -1,0 +1,257 @@
+:host {
+  display: block;
+}
+
+.cohorts-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  color: #11243c;
+}
+
+.page-heading,
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-heading {
+  margin-bottom: 24px;
+}
+
+.page-heading h1,
+.detail-card h2 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #7789a0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.primary-action {
+  min-height: 44px;
+  border-radius: 9px;
+  color: #fff !important;
+  background: #1875e5;
+}
+
+.form-card,
+.detail-card {
+  padding: 22px;
+  border: 1px solid #e4ebf4;
+  border-radius: 13px;
+  box-shadow: 0 2px 10px rgb(19 50 84 / 4%);
+}
+
+.form-card {
+  margin-bottom: 20px;
+}
+
+.form-card h2 {
+  margin: 0 0 18px;
+  font-size: 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid mat-form-field,
+.program-filter,
+.assign-row mat-form-field {
+  width: 100%;
+}
+
+.error-message {
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.program-filter {
+  max-width: 400px;
+  margin-bottom: 8px;
+}
+
+.cohort-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.cohort-list {
+  overflow: hidden;
+  border: 1px solid #e4ebf4;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.cohort-row {
+  display: flex;
+  width: 100%;
+  min-height: 90px;
+  align-items: center;
+  gap: 15px;
+  padding: 16px;
+  border: 0;
+  border-bottom: 1px solid #e9eef5;
+  color: inherit;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cohort-row:last-child {
+  border-bottom: 0;
+}
+
+.cohort-row:hover,
+.cohort-row.selected {
+  background: #f5f9ff;
+}
+
+.cohort-icon,
+.avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.cohort-icon {
+  width: 44px;
+  height: 44px;
+  color: #1476ed;
+  background: #e1efff;
+}
+
+.cohort-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cohort-copy strong {
+  font-size: 15px;
+}
+
+.cohort-copy span,
+.cohort-copy small,
+.muted,
+.date-range {
+  color: #71839a;
+  font-size: 13px;
+}
+
+.detail-card h2 {
+  font-size: 23px;
+}
+
+.date-range {
+  margin: 8px 0 18px;
+}
+
+.detail-stats {
+  display: flex;
+  gap: 22px;
+  padding: 15px 0;
+  margin-bottom: 16px;
+  border-top: 1px solid #e9eef5;
+  border-bottom: 1px solid #e9eef5;
+  color: #71839a;
+  font-size: 13px;
+}
+
+.detail-stats strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #11243c;
+  font-size: 20px;
+}
+
+.section-heading h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  color: #1875e5;
+  background: #e1efff;
+  font-weight: 600;
+}
+
+.assign-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.assign-row mat-form-field {
+  flex: 1;
+}
+
+.assign-button {
+  margin-top: -20px;
+  color: #fff;
+  background: #1875e5;
+}
+
+.empty-state {
+  padding: 24px;
+  color: #71839a;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .cohort-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .page-heading {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .primary-action span {
+    display: none;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-card,
+  .detail-card {
+    padding: 17px;
+  }
+
+  .cohort-row {
+    padding: 14px 12px;
+  }
+}

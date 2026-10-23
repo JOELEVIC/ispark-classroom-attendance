@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+
+.trainees-page {
+  max-width: 950px;
+  margin: 0 auto;
+  color: #11243c;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #7789a0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.heading-actions {
+  display: flex;
+  gap: 9px;
+}
+
+.heading-actions button {
+  min-height: 44px;
+  border-radius: 9px;
+}
+
+.primary-action {
+  color: #fff !important;
+  background: #1875e5;
+}
+
+.form-card {
+  padding: 20px;
+  margin-bottom: 18px;
+  border: 1px solid #e4ebf4;
+  border-radius: 13px;
+}
+
+.form-card h2 {
+  margin: 0 0 14px;
+  font-size: 17px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid mat-form-field {
+  width: 100%;
+}
+
+.error-message {
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.search-field mat-icon[matPrefix] {
+  margin-right: 8px;
+  color: #74869e;
+}
+
+.cohort-filter {
+  width: min(100%, 290px);
+}
+
+.trainee-list {
+  overflow: hidden;
+  border: 1px solid #e4ebf4;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.trainee-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  border: 0;
+  border-bottom: 1px solid #e9eef5;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.trainee-card:last-child {
+  border-bottom: 0;
+}
+
+.trainee-avatar {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #7543d7;
+  background: #eee5ff;
+  font-weight: 650;
+}
+
+.trainee-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.trainee-copy h2 {
+  overflow: hidden;
+  margin: 0 0 5px;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trainee-copy p {
+  overflow: hidden;
+  margin: 0;
+  color: #71839a;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cohort-count {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border-radius: 20px;
+  color: #38699e;
+  background: #edf5ff;
+  font-size: 11px;
+}
+
+.empty-state {
+  padding: 30px;
+  color: #71839a;
+  text-align: center;
+}
+
+@media (max-width: 620px) {
+  .page-heading {
+    align-items: flex-start;
+  }
+
+  .heading-actions {
+    flex-direction: column;
+  }
+
+  .heading-actions button {
+    min-height: 38px;
+    font-size: 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .filter-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .cohort-filter {
+    width: 100%;
+  }
+
+  .trainee-card {
+    padding: 13px 10px;
+  }
+
+  .cohort-count {
+    font-size: 10px;
+  }
+}

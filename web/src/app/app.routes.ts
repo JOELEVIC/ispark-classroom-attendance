@@ -2,15 +2,7 @@
 import { Routes } from '@angular/router';
 
 import { AppLayout } from './layout/app-layout/app-layout';
-// import { Dashboard } from './features/dashboard/dashboard';
-import { Dashboard } from './features/dashboard/dashboard/dashboard'
-import { ProgramList } from './features/programs/program-list/program-list'
-import { CohortList } from './features/cohorts/cohort-list/cohort-list'
-import { TrainerList } from  './features/trainers/trainer-list/trainer-list'
-import { TraineeList } from './features/trainees/trainee-list/trainee-list'
-import { ClassList } from './features/classes/class-list/class-list';
-import { TakeAttendance } from './features/attendance/take-attendance/take-attendance';
-import { CohortReport } from './features/reports/cohort-report/cohort-report';
+import { Dashboard } from './features/dashboard/dashboard/dashboard';
 
 export const routes: Routes = [
   {
@@ -18,13 +10,55 @@ export const routes: Routes = [
     component: AppLayout,
     children: [
       { path: '', component: Dashboard },
-      { path: 'programs', component: ProgramList },
-      { path: 'cohorts', component: CohortList },
-      { path: 'trainers', component: TrainerList },
-      { path: 'trainees', component: TraineeList },
-      { path: 'classes', component: ClassList },
-      { path: 'attendance', component: TakeAttendance },
-      { path: 'reports', component: CohortReport },
+      {
+        path: 'programs',
+        loadComponent: () =>
+          import('./features/programs/program-list/program-list').then(
+            (module) => module.ProgramList,
+          ),
+      },
+      {
+        path: 'cohorts',
+        loadComponent: () =>
+          import('./features/cohorts/cohort-list/cohort-list').then(
+            (module) => module.CohortList,
+          ),
+      },
+      {
+        path: 'trainers',
+        loadComponent: () =>
+          import('./features/trainers/trainer-list/trainer-list').then(
+            (module) => module.TrainerList,
+          ),
+      },
+      {
+        path: 'trainees',
+        loadComponent: () =>
+          import('./features/trainees/trainee-list/trainee-list').then(
+            (module) => module.TraineeList,
+          ),
+      },
+      {
+        path: 'classes',
+        loadComponent: () =>
+          import('./features/classes/class-list/class-list').then(
+            (module) => module.ClassList,
+          ),
+      },
+      {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./features/attendance/take-attendance/take-attendance').then(
+            (module) => module.TakeAttendance,
+          ),
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/reports/cohort-report/cohort-report').then(
+            (module) => module.CohortReport,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

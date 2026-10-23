@@ -1,0 +1,171 @@
+:host {
+  display: block;
+}
+
+.programs-page {
+  max-width: 900px;
+  margin: 0 auto;
+  color: #11243c;
+}
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.add-program-button {
+  min-width: 48px;
+  height: 44px;
+  border-radius: 10px;
+  color: #fff !important;
+  background: #1875e5;
+}
+
+.search-field {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.search-field mat-icon[matPrefix] {
+  margin-right: 9px;
+  color: #74869e;
+}
+
+.program-list {
+  overflow: hidden;
+  border: 1px solid #e4ebf4;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.program-card {
+  display: flex;
+  min-height: 100px;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 0;
+  border-bottom: 1px solid #e9eef5;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.program-card:last-child {
+  border-bottom: 0;
+}
+
+.program-icon {
+  display: inline-flex;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #1476ed;
+  background: #e1efff;
+}
+
+.program-icon mat-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+}
+
+.program-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.program-copy h2 {
+  overflow: hidden;
+  margin: 0 0 7px;
+  font-size: 16px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-copy p {
+  margin: 0;
+  color: #70839c;
+  font-size: 14px;
+}
+
+.program-copy p span {
+  margin: 0 4px;
+}
+
+.program-chevron {
+  flex: 0 0 auto;
+  color: #6f839c;
+}
+
+.loading-state,
+.message-state {
+  display: flex;
+  min-height: 180px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #71839a;
+  text-align: center;
+}
+
+.message-state p {
+  margin: 0;
+}
+
+.message-state > mat-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 34px;
+  color: #8b9bb0;
+}
+
+@media (max-width: 600px) {
+  .page-heading {
+    margin-bottom: 20px;
+  }
+
+  .add-program-button {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+  }
+
+  .add-program-button .add-label {
+    display: none;
+  }
+
+  .program-card {
+    min-height: 100px;
+    gap: 13px;
+    padding: 16px 12px;
+  }
+
+  .program-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .program-copy h2 {
+    font-size: 15px;
+  }
+
+  .program-copy p {
+    font-size: 13px;
+  }
+}

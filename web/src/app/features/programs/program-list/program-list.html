@@ -1,1 +1,75 @@
-<p>program-list works!</p>
+<section class="programs-page" aria-labelledby="programs-heading">
+  <header class="page-heading">
+    <h1 id="programs-heading">Programs</h1>
+    <button
+      class="add-program-button"
+      mat-flat-button
+      aria-label="Add new program"
+      (click)="openNewProgramDialog()"
+    >
+      <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+      <span class="add-label">Add Program</span>
+    </button>
+  </header>
+
+  <mat-form-field class="search-field" appearance="outline">
+    <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
+    <input
+      matInput
+      type="search"
+      placeholder="Search programs..."
+      aria-label="Search programs"
+      [(ngModel)]="searchTerm"
+    />
+    @if (searchTerm) {
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        aria-label="Clear search"
+        (click)="searchTerm = ''"
+      >
+        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+      </button>
+    }
+  </mat-form-field>
+
+  @if (filteredPrograms.length) {
+    <div class="program-list">
+      @for (program of filteredPrograms; track program.id) {
+        <mat-card class="program-card">
+          <span class="program-icon">
+            <mat-icon fontSet="material-symbols-outlined">library_books</mat-icon>
+          </span>
+          <div class="program-copy">
+            <h2>{{ program.name }}</h2>
+            <p>
+              {{ program.cohort_count }}
+              {{ program.cohort_count === 1 ? 'cohort' : 'cohorts' }}
+              <span aria-hidden="true">·</span>
+              {{ program.trainee_count }}
+              {{ program.trainee_count === 1 ? 'trainee' : 'trainees' }}
+            </p>
+          </div>
+          <mat-icon class="program-chevron" fontSet="material-symbols-outlined">
+            chevron_right
+          </mat-icon>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="message-state">
+      <mat-icon fontSet="material-symbols-outlined">
+        {{ searchTerm ? 'search_off' : 'library_books' }}
+      </mat-icon>
+      <p>
+        {{ searchTerm ? 'No programs match your search.' : 'No programs yet.' }}
+      </p>
+      @if (!searchTerm) {
+        <button mat-stroked-button type="button" (click)="openNewProgramDialog()">
+          Create your first program
+        </button>
+      }
+    </div>
+  }
+</section>

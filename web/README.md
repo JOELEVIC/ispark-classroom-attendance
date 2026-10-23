@@ -12,6 +12,9 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+The current frontend screens use shared in-memory demo data and do not require the API.
+Changes made in the app are temporary and reset when the page is reloaded.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
