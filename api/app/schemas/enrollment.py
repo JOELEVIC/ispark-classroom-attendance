@@ -11,3 +11,4 @@ class EnrollmentRespond(BaseModel):
     trainee_id: int
     cohort_id: int
     enrolled_at: datetime
+    trainee_name: str | None = None

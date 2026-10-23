@@ -18,8 +18,8 @@
       <div class="form-grid">
         <mat-form-field appearance="outline">
           <mat-label>Program</mat-label>
-          <mat-select [(ngModel)]="programId" (selectionChange)="onProgramChange()">
-            @for (program of data.programs; track program.id) {
+          <mat-select [(ngModel)]="createProgramId">
+            @for (program of programs(); track program.id) {
               <mat-option [value]="program.id">{{ program.name }}</mat-option>
             }
           </mat-select>
@@ -40,95 +40,157 @@
       @if (errorMessage) {
         <p class="error-message" role="alert">{{ errorMessage }}</p>
       }
-      <button mat-flat-button class="primary-action" (click)="createCohort()">
-        Create Cohort
+      <button
+        mat-flat-button
+        class="primary-action"
+        [disabled]="submitting()"
+        (click)="createCohort()"
+      >
+        {{ submitting() ? 'Creating...' : 'Create Cohort' }}
       </button>
     </mat-card>
   }
 
   <mat-form-field class="program-filter" appearance="outline">
     <mat-label>Filter by program</mat-label>
-    <mat-select [(ngModel)]="programId">
+    <mat-select
+      [(ngModel)]="programFilterId"
+      (selectionChange)="onProgramChange()"
+    >
       <mat-option [value]="null">All programs</mat-option>
-      @for (program of data.programs; track program.id) {
+      @for (program of programs(); track program.id) {
         <mat-option [value]="program.id">{{ program.name }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
 
-  <div class="cohort-layout">
-    <div class="cohort-list">
-      @for (cohort of filteredCohorts; track cohort.id) {
-        <button
-          class="cohort-row"
-          [class.selected]="selectedCohortId === cohort.id"
-          (click)="selectedCohortId = cohort.id"
-        >
-          <span class="cohort-icon">
-            <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
-          </span>
-          <span class="cohort-copy">
-            <strong>{{ cohort.name }}</strong>
-            <span>{{ programName(cohort.programId) }}</span>
-            <small>
-              {{ cohortTraineeCount(cohort.id) }} trainees ·
-              {{ cohortTrainerCount(cohort.id) }} trainers
-            </small>
-          </span>
-          <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
-        </button>
-      } @empty {
-        <p class="empty-state">No cohorts in this program yet.</p>
-      }
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading cohorts...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">
+        Retry
+      </button>
     </div>
-
-    @if (selectedCohort; as cohort) {
-      <mat-card class="detail-card">
-        <p class="eyebrow">{{ programName(cohort.programId) }}</p>
-        <h2>{{ cohort.name }}</h2>
-        <p class="date-range">
-          {{ cohort.startDate | date: 'MMM d, y' }} – {{ cohort.endDate | date: 'MMM d, y' }}
-        </p>
-
-        <div class="detail-stats">
-          <span><strong>{{ cohortTraineeCount(cohort.id) }}</strong> Trainees</span>
-          <span><strong>{{ data.classesFor(cohort.id).length }}</strong> Classes</span>
-        </div>
-
-        <div class="section-heading">
-          <h3>Assigned trainers</h3>
-        </div>
-        @for (trainer of data.trainersFor(cohort.id); track trainer.id) {
-          <div class="person-row">
-            <span class="avatar">{{ trainer.name.slice(0, 1) }}</span>
-            <span>{{ trainer.name }}</span>
-          </div>
+  } @else {
+    <div class="cohort-layout">
+      <div class="cohort-list">
+        @for (cohort of filteredCohorts; track cohort.id) {
+          <button
+            class="cohort-row"
+            [class.selected]="selectedCohortId === cohort.id"
+            (click)="selectCohort(cohort.id)"
+          >
+            <span class="cohort-icon">
+              <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
+            </span>
+            <span class="cohort-copy">
+              <strong>{{ cohort.name }}</strong>
+              <span>{{ cohort.programName }}</span>
+              <small>
+                {{ cohort.trainees.length }} trainees ·
+                {{ cohort.trainers.length }} trainers
+              </small>
+            </span>
+            <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
+          </button>
         } @empty {
-          <p class="muted">No trainers assigned yet.</p>
+          <p class="empty-state">
+            {{ programFilterId === null ? 'No cohorts yet.' : 'No cohorts in this program yet.' }}
+          </p>
         }
+      </div>
 
-        <div class="assign-row">
-          <mat-form-field appearance="outline">
-            <mat-label>Assign a trainer</mat-label>
-            <mat-select [(ngModel)]="selectedTrainerId">
-              @for (trainer of data.trainers; track trainer.id) {
-                @if (!trainer.cohortIds.includes(cohort.id)) {
+      @if (selectedCohort; as cohort) {
+        <mat-card class="detail-card">
+          <p class="eyebrow">{{ cohort.programName }}</p>
+          <h2>{{ cohort.name }}</h2>
+          <p class="date-range">
+            {{ cohort.startDate | date: 'MMM d, y' }} –
+            {{ cohort.endDate | date: 'MMM d, y' }}
+          </p>
+
+          <div class="detail-stats">
+            <span><strong>{{ cohort.trainees.length }}</strong> Trainees</span>
+            <span><strong>{{ cohort.classCount }}</strong> Classes</span>
+          </div>
+
+          @if (errorMessage) {
+            <p class="error-message" role="alert">{{ errorMessage }}</p>
+          }
+
+          <div class="section-heading">
+            <h3>Enrolled trainees</h3>
+          </div>
+          @for (trainee of cohort.trainees; track trainee.id) {
+            <div class="person-row">
+              <span class="avatar">{{ trainee.name.slice(0, 1) }}</span>
+              <span>{{ trainee.name }}</span>
+            </div>
+          } @empty {
+            <p class="muted">No trainees enrolled yet.</p>
+          }
+
+          @if (trainees().length === 0) {
+            <p class="muted">Create a trainee before enrolling one.</p>
+          } @else if (availableTrainees.length) {
+            <div class="assign-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Enroll a trainee</mat-label>
+                <mat-select [(ngModel)]="selectedTraineeId">
+                  @for (trainee of availableTrainees; track trainee.id) {
+                    <mat-option [value]="trainee.id">{{ trainee.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button
+                mat-icon-button
+                class="assign-button"
+                aria-label="Enroll selected trainee"
+                [disabled]="selectedTraineeId === null || submitting()"
+                (click)="enrollTrainee()"
+              >
+                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+              </button>
+            </div>
+          } @else {
+            <p class="muted">All trainees are already enrolled.</p>
+          }
+
+          <div class="section-heading">
+            <h3>Assigned trainers</h3>
+          </div>
+          @for (trainer of cohort.trainers; track trainer.id) {
+            <div class="person-row">
+              <span class="avatar">{{ trainer.name.slice(0, 1) }}</span>
+              <span>{{ trainer.name }}</span>
+            </div>
+          } @empty {
+            <p class="muted">No trainers assigned yet.</p>
+          }
+
+          <div class="assign-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Assign a trainer</mat-label>
+              <mat-select [(ngModel)]="selectedTrainerId">
+                @for (trainer of availableTrainers; track trainer.id) {
                   <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
                 }
-              }
-            </mat-select>
-          </mat-form-field>
-          <button
-            mat-icon-button
-            class="assign-button"
-            aria-label="Assign selected trainer"
-            [disabled]="selectedTrainerId === null"
-            (click)="assignTrainer()"
-          >
-            <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-          </button>
-        </div>
-      </mat-card>
-    }
-  </div>
+              </mat-select>
+            </mat-form-field>
+            <button
+              mat-icon-button
+              class="assign-button"
+              aria-label="Assign selected trainer"
+              [disabled]="selectedTrainerId === null || submitting()"
+              (click)="assignTrainer()"
+            >
+              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
 </section>
