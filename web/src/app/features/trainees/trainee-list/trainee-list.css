@@ -31,17 +31,9 @@
   letter-spacing: 0.1em;
 }
 
-.heading-actions {
-  display: flex;
-  gap: 9px;
-}
-
-.heading-actions button {
+.primary-action {
   min-height: 44px;
   border-radius: 9px;
-}
-
-.primary-action {
   color: #fff !important;
   background: #1875e5;
 }
@@ -58,14 +50,14 @@
   font-size: 17px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.inline-form {
+  display: flex;
+  align-items: flex-start;
   gap: 12px;
 }
 
-.form-grid mat-form-field {
-  width: 100%;
+.inline-form mat-form-field {
+  flex: 1;
 }
 
 .error-message {
@@ -73,22 +65,14 @@
   font-size: 13px;
 }
 
-.filter-row {
-  display: flex;
-  gap: 12px;
-}
-
 .search-field {
-  flex: 1;
+  width: 100%;
+  margin-bottom: 8px;
 }
 
 .search-field mat-icon[matPrefix] {
   margin-right: 8px;
   color: #74869e;
-}
-
-.cohort-filter {
-  width: min(100%, 290px);
 }
 
 .trainee-list {
@@ -134,29 +118,11 @@
 
 .trainee-copy h2 {
   overflow: hidden;
-  margin: 0 0 5px;
+  margin: 0;
   font-size: 15px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.trainee-copy p {
-  overflow: hidden;
-  margin: 0;
-  color: #71839a;
-  font-size: 12px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cohort-count {
-  flex: 0 0 auto;
-  padding: 5px 9px;
-  border-radius: 20px;
-  color: #38699e;
-  background: #edf5ff;
-  font-size: 11px;
 }
 
 .empty-state {
@@ -165,39 +131,40 @@
   text-align: center;
 }
 
+.empty-state.error-message {
+  color: #b3261e;
+}
+
 @media (max-width: 620px) {
   .page-heading {
     align-items: flex-start;
   }
 
-  .heading-actions {
+  .page-heading .primary-action {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+  }
+
+  .page-heading .primary-action span {
+    display: none;
+  }
+
+  .inline-form {
     flex-direction: column;
   }
 
-  .heading-actions button {
+  .inline-form mat-form-field,
+  .inline-form button {
+    width: 100%;
+  }
+
+  .page-heading button {
     min-height: 38px;
     font-size: 12px;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .filter-row {
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .cohort-filter {
-    width: 100%;
-  }
-
   .trainee-card {
     padding: 13px 10px;
-  }
-
-  .cohort-count {
-    font-size: 10px;
   }
 }

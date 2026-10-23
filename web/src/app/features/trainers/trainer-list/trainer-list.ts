@@ -1,12 +1,11 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MockData } from '../../../core/mock-data';
+import { TrainerApiService, TrainerRecord } from './trainer-api.service';
 
 @Component({
   imports: [
@@ -16,26 +15,47 @@ import { MockData } from '../../../core/mock-data';
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatSelectModule,
   ],
   selector: 'app-trainer-list',
   styleUrl: './trainer-list.css',
   templateUrl: './trainer-list.html',
 })
 export class TrainerList {
-  protected readonly data = inject(MockData);
+  private readonly trainerApi = inject(TrainerApiService);
+  protected readonly trainers = signal<TrainerRecord[]>([]);
+  protected readonly loading = signal(true);
+  protected readonly loadError = signal<string | null>(null);
+  protected readonly submitting = signal(false);
   protected searchTerm = '';
   protected trainerName = '';
-  protected selectedCohortId: number | null = null;
   protected showCreateForm = false;
-  protected showAssignFormFor: number | null = null;
   protected errorMessage = '';
+
+  constructor() {
+    this.loadTrainers();
+  }
 
   protected get filteredTrainers() {
     const query = this.searchTerm.trim().toLocaleLowerCase();
-    return this.data.trainers.filter((trainer) =>
+    return this.trainers().filter((trainer) =>
       trainer.name.toLocaleLowerCase().includes(query),
     );
+  }
+
+  protected loadTrainers(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
+    this.trainerApi.list().subscribe({
+      next: (trainers) => {
+        this.trainers.set(trainers);
+        this.loading.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to load trainers', error);
+        this.loadError.set("Couldn't load trainers. Please try again.");
+        this.loading.set(false);
+      },
+    });
   }
 
   protected createTrainer(): void {
@@ -43,37 +63,25 @@ export class TrainerList {
       this.errorMessage = 'Enter a trainer name with at least 2 characters.';
       return;
     }
-    this.data.createTrainer(this.trainerName);
-    this.trainerName = '';
     this.errorMessage = '';
-    this.showCreateForm = false;
-  }
-
-  protected assignTrainer(trainerId: number): void {
-    if (this.selectedCohortId === null) {
-      this.errorMessage = 'Choose a cohort first.';
-      return;
-    }
-    this.data.assignTrainer(trainerId, this.selectedCohortId);
-    this.showAssignFormFor = null;
-    this.selectedCohortId = null;
-    this.errorMessage = '';
-  }
-
-  protected cohortNames(cohortIds: number[]): string {
-    return cohortIds
-      .map((id) => {
-        const cohort = this.data.cohorts.find((item) => item.id === id);
-        const program = this.data.programs.find(
-          (item) => item.id === cohort?.programId,
+    this.submitting.set(true);
+    this.trainerApi.create(this.trainerName.trim()).subscribe({
+      next: (trainer) => {
+        this.trainers.update((trainers) =>
+          [...trainers, trainer].sort((left, right) =>
+            left.name.localeCompare(right.name),
+          ),
         );
-        return cohort ? `${program?.name ?? ''} · ${cohort.name}` : '';
-      })
-      .filter(Boolean)
-      .join(', ');
+        this.trainerName = '';
+        this.showCreateForm = false;
+        this.submitting.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to create trainer', error);
+        this.errorMessage = "Couldn't create trainer. Please try again.";
+        this.submitting.set(false);
+      },
+    });
   }
 
-  protected programName(programId: number): string {
-    return this.data.programs.find((program) => program.id === programId)?.name ?? '';
-  }
 }

@@ -33,8 +33,9 @@ while removing the `/api` prefix (for example, map `/api/programs/` to
 cross-origin requests. Update `src/environments/environment.ts` if production
 uses a different API base URL.
 
-The Programs page uses FastAPI to list and create programs. Other screens still
-use shared in-memory demo data.
+The Programs page uses FastAPI to list and create programs. The Trainees page
+uses FastAPI to list and create trainees. Other screens still use shared
+in-memory demo data.
 
 ## Code scaffolding
 

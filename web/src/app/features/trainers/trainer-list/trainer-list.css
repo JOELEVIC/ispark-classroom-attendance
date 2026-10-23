@@ -49,15 +49,13 @@
   font-size: 17px;
 }
 
-.inline-form,
-.assign-form {
+.inline-form {
   display: flex;
   align-items: flex-start;
   gap: 12px;
 }
 
-.inline-form mat-form-field,
-.assign-form mat-form-field {
+.inline-form mat-form-field {
   flex: 1;
 }
 
@@ -118,26 +116,6 @@
   font-weight: 600;
 }
 
-.trainer-copy p {
-  margin: 0;
-  color: #70839c;
-  font-size: 13px;
-}
-
-.trainer-copy p.muted {
-  color: #8a98aa;
-}
-
-.assign-form {
-  margin-top: 14px;
-}
-
-.assign-button {
-  flex: 0 0 auto;
-  border-color: #d8e4f3;
-  color: #2269ba;
-}
-
 .error-message {
   margin: 0 0 10px;
   color: #b3261e;
@@ -174,11 +152,4 @@
     flex-basis: calc(100% - 60px);
   }
 
-  .assign-button {
-    margin-left: 58px;
-  }
-
-  .assign-form {
-    flex-direction: column;
-  }
 }

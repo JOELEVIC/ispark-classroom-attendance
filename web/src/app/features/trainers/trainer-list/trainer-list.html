@@ -29,8 +29,13 @@
             (keyup.enter)="createTrainer()"
           />
         </mat-form-field>
-        <button mat-flat-button class="primary-action" (click)="createTrainer()">
-          Save Trainer
+        <button
+          mat-flat-button
+          class="primary-action"
+          [disabled]="submitting()"
+          (click)="createTrainer()"
+        >
+          {{ submitting() ? 'Saving...' : 'Save Trainer' }}
         </button>
       </div>
       @if (errorMessage) {
@@ -44,48 +49,31 @@
     <input matInput [(ngModel)]="searchTerm" placeholder="Search trainers..." />
   </mat-form-field>
 
-  <div class="trainer-list">
-    @for (trainer of filteredTrainers; track trainer.id) {
-      <mat-card class="trainer-card">
-        <span class="trainer-avatar">{{ trainer.name.slice(0, 1) }}</span>
-        <div class="trainer-copy">
-          <h2>{{ trainer.name }}</h2>
-          @if (trainer.cohortIds.length) {
-            <p>{{ cohortNames(trainer.cohortIds) }}</p>
-          } @else {
-            <p class="muted">Not assigned to a cohort</p>
-          }
+  @if (errorMessage && !showCreateForm) {
+    <p class="error-message" role="alert">{{ errorMessage }}</p>
+  }
 
-          @if (showAssignFormFor === trainer.id) {
-            <div class="assign-form">
-              <mat-form-field appearance="outline">
-                <mat-label>Choose cohort</mat-label>
-                <mat-select [(ngModel)]="selectedCohortId">
-                  @for (cohort of data.cohorts; track cohort.id) {
-                    @if (!trainer.cohortIds.includes(cohort.id)) {
-                      <mat-option [value]="cohort.id">
-                        {{ programName(cohort.programId) }} · {{ cohort.name }}
-                      </mat-option>
-                    }
-                  }
-                </mat-select>
-              </mat-form-field>
-              <button mat-flat-button class="primary-action" (click)="assignTrainer(trainer.id)">
-                Assign
-              </button>
-            </div>
-          }
-        </div>
-        <button
-          mat-stroked-button
-          class="assign-button"
-          (click)="showAssignFormFor = showAssignFormFor === trainer.id ? null : trainer.id; errorMessage = ''"
-        >
-          {{ showAssignFormFor === trainer.id ? 'Close' : 'Assign Cohort' }}
-        </button>
-      </mat-card>
-    } @empty {
-      <div class="empty-state">No trainers match your search.</div>
-    }
-  </div>
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading trainers...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadTrainers()">
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div class="trainer-list">
+      @for (trainer of filteredTrainers; track trainer.id) {
+        <mat-card class="trainer-card">
+          <span class="trainer-avatar">{{ trainer.name.slice(0, 1) }}</span>
+          <div class="trainer-copy">
+            <h2>{{ trainer.name }}</h2>
+          </div>
+        </mat-card>
+      } @empty {
+        <div class="empty-state">No trainers match your search.</div>
+      }
+    </div>
+  }
 </section>

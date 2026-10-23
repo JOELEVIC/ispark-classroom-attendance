@@ -4,120 +4,78 @@
       <p class="eyebrow">PEOPLE</p>
       <h1>Trainees</h1>
     </div>
-    <div class="heading-actions">
-      <button
-        mat-stroked-button
-        (click)="showEnrollForm = !showEnrollForm; showCreateForm = false; errorMessage = ''"
-      >
-        <mat-icon fontSet="material-symbols-outlined">how_to_reg</mat-icon>
-        <span>Enroll Existing</span>
-      </button>
-      <button
-        mat-flat-button
-        class="primary-action"
-        (click)="showCreateForm = !showCreateForm; showEnrollForm = false; errorMessage = ''"
-      >
-        <mat-icon fontSet="material-symbols-outlined">
-          {{ showCreateForm ? 'close' : 'person_add' }}
-        </mat-icon>
-        <span>{{ showCreateForm ? 'Cancel' : 'Add Trainee' }}</span>
-      </button>
-    </div>
+    <button
+      mat-flat-button
+      class="primary-action"
+      (click)="showCreateForm = !showCreateForm; errorMessage = ''"
+    >
+      <mat-icon fontSet="material-symbols-outlined">
+        {{ showCreateForm ? 'close' : 'person_add' }}
+      </mat-icon>
+      <span>{{ showCreateForm ? 'Cancel' : 'Add Trainee' }}</span>
+    </button>
   </header>
 
   @if (showCreateForm) {
     <mat-card class="form-card">
       <h2>Create a trainee</h2>
-      <div class="form-grid">
+      <div class="inline-form">
         <mat-form-field appearance="outline">
           <mat-label>Full name</mat-label>
-          <input matInput [(ngModel)]="traineeName" placeholder="Enter full name" />
+          <input
+            matInput
+            [(ngModel)]="traineeName"
+            placeholder="Enter full name"
+            (keyup.enter)="createTrainee()"
+          />
         </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Enroll into cohort (optional)</mat-label>
-          <mat-select [(ngModel)]="enrollmentCohortId">
-            @for (cohort of data.cohorts; track cohort.id) {
-              <mat-option [value]="cohort.id">{{ cohortName(cohort.id) }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <button
+          mat-flat-button
+          class="primary-action"
+          [disabled]="submitting()"
+          (click)="createTrainee()"
+        >
+          {{ submitting() ? 'Saving...' : 'Save Trainee' }}
+        </button>
       </div>
       @if (errorMessage) {
         <p class="error-message" role="alert">{{ errorMessage }}</p>
       }
-      <button mat-flat-button class="primary-action" (click)="createTrainee()">
-        Save Trainee
-      </button>
     </mat-card>
   }
 
-  @if (showEnrollForm) {
-    <mat-card class="form-card">
-      <h2>Enroll an existing trainee</h2>
-      <div class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Trainee</mat-label>
-          <mat-select [(ngModel)]="selectedTraineeId">
-            @for (trainee of data.trainees; track trainee.id) {
-              <mat-option [value]="trainee.id">{{ trainee.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Cohort</mat-label>
-          <mat-select [(ngModel)]="enrollmentCohortId">
-            @for (cohort of data.cohorts; track cohort.id) {
-              <mat-option [value]="cohort.id">{{ cohortName(cohort.id) }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
-      @if (errorMessage) {
-        <p class="error-message" role="alert">{{ errorMessage }}</p>
-      }
-      <button mat-flat-button class="primary-action" (click)="enrollExisting()">
-        Enroll Trainee
-      </button>
-    </mat-card>
+  @if (errorMessage && !showCreateForm) {
+    <p class="error-message" role="alert">{{ errorMessage }}</p>
   }
 
-  <div class="filter-row">
-    <mat-form-field class="search-field" appearance="outline">
-      <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
-      <input matInput [(ngModel)]="searchTerm" placeholder="Search trainees..." />
-    </mat-form-field>
-    <mat-form-field class="cohort-filter" appearance="outline">
-      <mat-label>All cohorts</mat-label>
-      <mat-select [(ngModel)]="cohortId">
-        <mat-option [value]="null">All cohorts</mat-option>
-        @for (cohort of data.cohorts; track cohort.id) {
-          <mat-option [value]="cohort.id">{{ cohortName(cohort.id) }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-  </div>
+  <mat-form-field class="search-field" appearance="outline">
+    <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
+    <input matInput [(ngModel)]="searchTerm" placeholder="Search trainees..." />
+  </mat-form-field>
 
-  <div class="trainee-list">
-    @for (trainee of filteredTrainees; track trainee.id) {
-      <mat-card class="trainee-card">
-        <span class="trainee-avatar">{{ trainee.name.slice(0, 1) }}</span>
-        <div class="trainee-copy">
-          <h2>{{ trainee.name }}</h2>
-          <p>
-            @for (id of trainee.cohortIds; track id; let last = $last) {
-              <span>{{ cohortName(id) }}{{ last ? '' : ' · ' }}</span>
-            } @empty {
-              <span class="muted">Not enrolled in a cohort</span>
-            }
-          </p>
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading trainees...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadTrainees()">
+        Retry
+      </button>
+    </div>
+  } @else {
+    <div class="trainee-list">
+      @for (trainee of filteredTrainees; track trainee.id) {
+        <mat-card class="trainee-card">
+          <span class="trainee-avatar">{{ trainee.name.slice(0, 1) }}</span>
+          <div class="trainee-copy">
+            <h2>{{ trainee.name }}</h2>
+          </div>
+        </mat-card>
+      } @empty {
+        <div class="empty-state">
+          {{ searchTerm ? 'No trainees match your search.' : 'No trainees yet.' }}
         </div>
-        <span class="cohort-count">
-          {{ trainee.cohortIds.length }}
-          {{ trainee.cohortIds.length === 1 ? 'cohort' : 'cohorts' }}
-        </span>
-      </mat-card>
-    } @empty {
-      <div class="empty-state">No trainees match your filters.</div>
-    }
-  </div>
+      }
+    </div>
+  }
 </section>
