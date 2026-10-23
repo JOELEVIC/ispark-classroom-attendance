@@ -116,4 +116,4 @@ Attendance history is protected against accidental loss, but valid corrections r
 
 ## 5. Next Steps/pending
 
-With more time, I would add a correction audit log, CSV import/export, recurring classes, cohort archiving, search and pagination, and a Docker Compose workflow. I would also expand automated tess for business rules and concurrent attendance submissions.
+With more time, I would add a correction audit log, CSV import/export, recurring classes, cohort archiving, search and pagination, and a Docker Compose workflow. I would also expand automated test for business rules and concurrent attendance submissions.
