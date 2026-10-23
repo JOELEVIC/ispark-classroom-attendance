@@ -65,15 +65,11 @@
   </nav>
 
   <mat-menu #moreMenu="matMenu">
-    @for (item of navigation.slice(2, 6); track item.path) {
+    @for (item of secondaryNavigation; track item.path) {
       <a mat-menu-item [routerLink]="item.path">
         <mat-icon fontSet="material-symbols-outlined">{{ item.icon }}</mat-icon>
         <span>{{ item.label }}</span>
       </a>
     }
-    <a mat-menu-item routerLink="/reports">
-      <mat-icon fontSet="material-symbols-outlined">bar_chart</mat-icon>
-      <span>Reports</span>
-    </a>
   </mat-menu>
 </div>

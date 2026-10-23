@@ -44,7 +44,7 @@ def record_attendance(
                     class_id,
                     cohort_id,
                     trainee_id,
-                    status,
+                    status.upper(),
                     trainer_id,
                     trainer_id,
                 ),

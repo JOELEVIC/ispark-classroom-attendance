@@ -68,6 +68,13 @@
   font-size: 13px;
 }
 
+.form-hint {
+  margin: -4px 0 14px;
+  color: #71839a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .class-list {
   overflow: hidden;
   border: 1px solid #e4ebf4;

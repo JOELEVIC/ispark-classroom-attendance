@@ -1,0 +1,80 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatSelectHarness } from '@angular/material/select/testing';
+import { of } from 'rxjs';
+import {
+  EnrollmentApiService,
+  EnrollmentCohort,
+} from './enrollment-api.service';
+import { EnrollmentList } from './enrollment-list';
+
+describe('EnrollmentList', () => {
+  let fixture: ComponentFixture<EnrollmentList>;
+  let api: {
+    getDirectory: ReturnType<typeof vi.fn>;
+    enroll: ReturnType<typeof vi.fn>;
+  };
+
+  const cohort: EnrollmentCohort = {
+    id: 10,
+    programId: 1,
+    programName: 'Web Development',
+    name: 'Cohort A',
+    trainees: [{ id: 8, name: 'Ada Trainee' }],
+  };
+
+  beforeEach(async () => {
+    api = {
+      getDirectory: vi.fn().mockReturnValue(
+        of({
+          cohorts: [cohort],
+          trainees: [
+            { id: 8, name: 'Ada Trainee' },
+            { id: 9, name: 'Bea Trainee' },
+          ],
+        }),
+      ),
+      enroll: vi.fn().mockReturnValue(of({})),
+    };
+    await TestBed.configureTestingModule({
+      imports: [EnrollmentList],
+      providers: [{ provide: EnrollmentApiService, useValue: api }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(EnrollmentList);
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  it('shows the selected cohort roster and eligible trainees', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent;
+    expect(api.getDirectory).toHaveBeenCalledOnce();
+    expect(text).toContain('Ada Trainee');
+    expect(text).toContain('1 enrolled');
+    expect(text).not.toContain('All trainees are already enrolled.');
+  });
+
+  it('enrolls a trainee and updates the roster count', async () => {
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const selects = await loader.getAllHarnesses(MatSelectHarness);
+    await selects[1].open();
+    const options = await selects[1].getOptions();
+    for (const option of options) {
+      if ((await option.getText()).includes('Bea Trainee')) {
+        await option.click();
+        break;
+      }
+    }
+    fixture.detectChanges();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button.primary-action')
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.enroll).toHaveBeenCalledWith(10, 9);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      '2 enrolled',
+    );
+  });
+});

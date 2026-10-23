@@ -1,0 +1,125 @@
+<section class="enrollments-page">
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">PEOPLE MANAGEMENT</p>
+      <h1>Enrollments</h1>
+      <p class="page-intro">
+        Manage which trainees belong to each cohort.
+      </p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading enrollment data...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">
+        Retry
+      </button>
+    </div>
+  } @else if (!cohorts().length) {
+    <div class="empty-state">
+      <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
+      <h2>No cohorts available</h2>
+      <p>Create a cohort before enrolling trainees.</p>
+    </div>
+  } @else {
+    <div class="enrollment-layout">
+      <mat-card class="enrollment-form">
+        <div class="section-title">
+          <span class="section-icon">
+            <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+          </span>
+          <div>
+            <h2>Enroll a trainee</h2>
+            <p>Add an existing trainee to a cohort.</p>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Cohort</mat-label>
+          <mat-select
+            [(ngModel)]="selectedCohortId"
+            (selectionChange)="onCohortChange()"
+          >
+            @for (cohort of cohorts(); track cohort.id) {
+              <mat-option [value]="cohort.id">
+                {{ cohort.programName }} · {{ cohort.name }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        @if (selectedCohort) {
+          @if (trainees().length === 0) {
+            <div class="all-enrolled">
+              <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+              <span>Create a trainee before enrolling one.</span>
+            </div>
+          } @else if (availableTrainees.length) {
+            <mat-form-field appearance="outline">
+              <mat-label>Trainee</mat-label>
+              <mat-select [(ngModel)]="selectedTraineeId">
+                @for (trainee of availableTrainees; track trainee.id) {
+                  <mat-option [value]="trainee.id">{{ trainee.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <button
+              mat-flat-button
+              class="primary-action"
+              [disabled]="selectedTraineeId === null || submitting()"
+              (click)="enrollTrainee()"
+            >
+              <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+              {{ submitting() ? 'Enrolling...' : 'Enroll Trainee' }}
+            </button>
+          } @else {
+            <div class="all-enrolled">
+              <mat-icon fontSet="material-symbols-outlined">check_circle</mat-icon>
+              <span>All trainees are already enrolled in this cohort.</span>
+            </div>
+          }
+        }
+
+        @if (errorMessage) {
+          <p class="error-message" role="alert">{{ errorMessage }}</p>
+        }
+        @if (successMessage) {
+          <p class="success-message" role="status">
+            <mat-icon fontSet="material-symbols-outlined">check_circle</mat-icon>
+            {{ successMessage }}
+          </p>
+        }
+      </mat-card>
+
+      @if (selectedCohort; as cohort) {
+        <mat-card class="roster-card">
+          <div class="roster-heading">
+            <div>
+              <p class="eyebrow">{{ cohort.programName }}</p>
+              <h2>{{ cohort.name }}</h2>
+            </div>
+            <span class="trainee-count">{{ cohort.trainees.length }} enrolled</span>
+          </div>
+          @for (trainee of cohort.trainees; track trainee.id; let index = $index) {
+            <div class="trainee-row">
+              <span class="row-number">{{ (index + 1).toString().padStart(2, '0') }}</span>
+              <span class="avatar">{{ trainee.name.slice(0, 1) }}</span>
+              <span class="trainee-name">{{ trainee.name }}</span>
+              <mat-icon fontSet="material-symbols-outlined" class="enrolled-icon">
+                check_circle
+              </mat-icon>
+            </div>
+          } @empty {
+            <div class="empty-roster">
+              <mat-icon fontSet="material-symbols-outlined">person_search</mat-icon>
+              <p>No trainees enrolled yet. Choose a trainee to get started.</p>
+            </div>
+          }
+        </mat-card>
+      }
+    </div>
+  }
+</section>

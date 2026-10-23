@@ -7,8 +7,8 @@
     <button
       mat-flat-button
       class="primary-action"
-      [disabled]="!assignedTrainers.length"
-      (click)="showCreateForm = !showCreateForm; errorMessage = ''"
+      [disabled]="!cohorts().length || loading()"
+      (click)="toggleCreateForm()"
     >
       <mat-icon fontSet="material-symbols-outlined">
         {{ showCreateForm ? 'close' : 'add' }}
@@ -17,96 +17,153 @@
     </button>
   </header>
 
-  <mat-form-field class="cohort-select" appearance="outline">
-    <mat-label>Cohort</mat-label>
-    <mat-select [(ngModel)]="cohortId" (selectionChange)="selectedSummaryId = null">
-      @for (cohort of data.cohorts; track cohort.id) {
-        <mat-option [value]="cohort.id">
-          {{ programName(cohort.programId) }} · {{ cohort.name }}
-        </mat-option>
-      }
-    </mat-select>
-  </mat-form-field>
-
-  @if (showCreateForm) {
-    <mat-card class="form-card">
-      <h2>Schedule a class</h2>
-      @if (!assignedTrainers.length) {
-        <p class="error-message">Assign a trainer to this cohort before scheduling a class.</p>
-      } @else {
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Topic</mat-label>
-            <input matInput [(ngModel)]="classTopic" placeholder="e.g. Intro to SQL" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Class date</mat-label>
-            <input matInput type="date" [(ngModel)]="classDate" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Trainer</mat-label>
-            <mat-select [(ngModel)]="trainerId">
-              @for (trainer of assignedTrainers; track trainer.id) {
-                <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        @if (errorMessage) {
-          <p class="error-message" role="alert">{{ errorMessage }}</p>
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading classes...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">
+        Retry
+      </button>
+    </div>
+  } @else if (!cohorts().length) {
+    <div class="empty-state">
+      <mat-icon fontSet="material-symbols-outlined">event_busy</mat-icon>
+      <p>Create a cohort before scheduling classes.</p>
+    </div>
+  } @else {
+    <mat-form-field class="cohort-select" appearance="outline">
+      <mat-label>Cohort</mat-label>
+      <mat-select
+        [(ngModel)]="cohortId"
+        (selectionChange)="onCohortChange()"
+      >
+        @for (cohort of cohorts(); track cohort.id) {
+          <mat-option [value]="cohort.id">
+            {{ cohort.programName }} · {{ cohort.name }}
+          </mat-option>
         }
-        <button mat-flat-button class="primary-action" (click)="createClass()">
-          Save Class
-        </button>
-      }
-    </mat-card>
-  }
+      </mat-select>
+    </mat-form-field>
 
-  <div class="class-list">
-    @for (classItem of classes; track classItem.id) {
-      <mat-card class="class-card">
-        <span class="class-date">
-          <strong>{{ classItem.date | date: 'd' }}</strong>
-          <span>{{ classItem.date | date: 'MMM' }}</span>
-        </span>
-        <div class="class-copy">
-          <h2>{{ classItem.topic }}</h2>
-          <p>{{ classItem.date | date: 'EEEE, MMMM d, y' }} · {{ trainerName(classItem.trainerId) }}</p>
-        </div>
-        <div class="class-actions">
-          <a
-            mat-flat-button
-            class="take-attendance"
-            routerLink="/attendance"
-            [queryParams]="{ classId: classItem.id }"
-          >
-            Take attendance
-          </a>
-          <button
-            mat-icon-button
-            aria-label="Toggle class summary"
-            (click)="selectedSummaryId = selectedSummaryId === classItem.id ? null : classItem.id"
-          >
-            <mat-icon fontSet="material-symbols-outlined">
-              {{ selectedSummaryId === classItem.id ? 'expand_less' : 'expand_more' }}
-            </mat-icon>
-          </button>
-        </div>
-        @if (selectedSummaryId === classItem.id) {
-          <div class="summary-row">
-            <span class="present">Present <strong>{{ countFor(classItem, 'present') }}</strong></span>
-            <span class="absent">Absent <strong>{{ countFor(classItem, 'absent') }}</strong></span>
-            <span class="late">Late <strong>{{ countFor(classItem, 'late') }}</strong></span>
-            <span class="excused">Excused <strong>{{ countFor(classItem, 'excused') }}</strong></span>
-            <span class="unmarked">Unmarked <strong>{{ unmarkedCount(classItem) }}</strong></span>
+    @if (showCreateForm) {
+      <mat-card class="form-card">
+        <h2>Schedule a class</h2>
+        @if (!schedulableTrainers.length) {
+          <p class="error-message">
+            Create a trainer before scheduling a class.
+          </p>
+          <a mat-button routerLink="/trainers">Go to Trainers</a>
+        } @else {
+          <div class="form-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Topic</mat-label>
+              <input
+                matInput
+                [(ngModel)]="classTopic"
+                placeholder="e.g. Intro to SQL"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Class date</mat-label>
+              <input
+                matInput
+                type="date"
+                [(ngModel)]="classDate"
+                [min]="selectedCohort?.startDate"
+                [max]="selectedCohort?.endDate"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Trainer</mat-label>
+              <mat-select [(ngModel)]="trainerId">
+                @for (trainer of schedulableTrainers; track trainer.id) {
+                  <mat-option [value]="trainer.id">
+                    {{ trainer.name }}
+                    @if (assignedTrainers.some((assigned) => assigned.id === trainer.id)) {
+                      · Assigned
+                    }
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
+          @if (selectedCohort; as cohort) {
+            <p class="form-hint">
+              Class date must be between
+              {{ cohort.startDate | date: 'MMM d, y' }} and
+              {{ cohort.endDate | date: 'MMM d, y' }}.
+              Trainers not yet assigned will be assigned when you save.
+            </p>
+          }
+          @if (errorMessage) {
+            <p class="error-message" role="alert">{{ errorMessage }}</p>
+          }
+          <button
+            mat-flat-button
+            class="primary-action"
+            [disabled]="submitting()"
+            (click)="createClass()"
+          >
+            {{ submitting() ? 'Saving...' : 'Save Class' }}
+          </button>
         }
       </mat-card>
-    } @empty {
-      <div class="empty-state">
-        <mat-icon fontSet="material-symbols-outlined">event_busy</mat-icon>
-        <p>No classes scheduled for this cohort yet.</p>
-      </div>
     }
-  </div>
+
+    @if (errorMessage && !showCreateForm) {
+      <p class="error-message" role="alert">{{ errorMessage }}</p>
+    }
+
+    <div class="class-list">
+      @for (classItem of classes; track classItem.id) {
+        <mat-card class="class-card">
+          <span class="class-date">
+            <strong>{{ classItem.date | date: 'd' }}</strong>
+            <span>{{ classItem.date | date: 'MMM' }}</span>
+          </span>
+          <div class="class-copy">
+            <h2>{{ classItem.topic }}</h2>
+            <p>
+              {{ classItem.date | date: 'EEEE, MMMM d, y' }} ·
+              {{ classItem.trainerName }}
+            </p>
+          </div>
+          <div class="class-actions">
+            <a
+              mat-flat-button
+              class="take-attendance"
+              routerLink="/attendance"
+              [queryParams]="{ classId: classItem.id }"
+            >
+              Take attendance
+            </a>
+            <button
+              mat-icon-button
+              aria-label="Toggle class summary"
+              (click)="selectedSummaryId = selectedSummaryId === classItem.id ? null : classItem.id"
+            >
+              <mat-icon fontSet="material-symbols-outlined">
+                {{ selectedSummaryId === classItem.id ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </button>
+          </div>
+          @if (selectedSummaryId === classItem.id) {
+            <div class="summary-row">
+              <span class="present">Present <strong>{{ countFor(classItem, 'present') }}</strong></span>
+              <span class="absent">Absent <strong>{{ countFor(classItem, 'absent') }}</strong></span>
+              <span class="late">Late <strong>{{ countFor(classItem, 'late') }}</strong></span>
+              <span class="excused">Excused <strong>{{ countFor(classItem, 'excused') }}</strong></span>
+              <span class="unmarked">Unmarked <strong>{{ unmarkedCount(classItem) }}</strong></span>
+            </div>
+          }
+        </mat-card>
+      } @empty {
+        <div class="empty-state">
+          <mat-icon fontSet="material-symbols-outlined">event_busy</mat-icon>
+          <p>No classes scheduled for this cohort yet.</p>
+        </div>
+      }
+    </div>
+  }
 </section>

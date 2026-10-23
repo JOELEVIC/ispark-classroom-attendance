@@ -6,117 +6,166 @@
     </div>
   </header>
 
-  <mat-card class="selection-card">
-    <div class="selection-grid">
-      <mat-form-field appearance="outline">
-        <mat-label>Cohort</mat-label>
-        <mat-select [(ngModel)]="cohortId" (selectionChange)="onCohortChange()">
-          @for (cohort of data.cohorts; track cohort.id) {
-            <mat-option [value]="cohort.id">
-              {{ programName(cohort.programId) }} · {{ cohort.name }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Class</mat-label>
-        <mat-select
-          [ngModel]="classId"
-          (ngModelChange)="selectClass($event)"
-          [disabled]="!classes.length"
-        >
-          @for (classItem of classes; track classItem.id) {
-            <mat-option [value]="classItem.id">
-              {{ classItem.date | date: 'MMM d' }} · {{ classItem.topic }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label>Recording trainer</mat-label>
-        <mat-select [(ngModel)]="trainerId" [disabled]="!trainers.length">
-          @for (trainer of trainers; track trainer.id) {
-            <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+  @if (loading()) {
+    <div class="empty-state" role="status">Loading attendance data...</div>
+  } @else if (loadError()) {
+    <div class="empty-state error-message" role="alert">
+      <p>{{ loadError() }}</p>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">
+        Retry
+      </button>
     </div>
-    @if (selectedClass) {
-      <div class="class-meta">
-        <mat-icon fontSet="material-symbols-outlined">event</mat-icon>
-        <span>{{ selectedClass.date | date: 'EEEE, MMMM d, y' }}</span>
-        <span class="meta-dot">·</span>
-        <span>{{ trainees.length }} trainees</span>
-      </div>
-    }
-  </mat-card>
-
-  @if (!selectedClass) {
+  } @else if (!cohorts().length) {
     <div class="empty-state">
       <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
-      <h2>Select a class to take attendance</h2>
-      <p>Choose the cohort and class above to load its roster.</p>
+      <h2>No cohorts available</h2>
+      <p>Create a cohort before recording attendance.</p>
     </div>
   } @else {
-    <div class="roster-heading">
-      <div>
-        <h2>{{ selectedClass.topic }}</h2>
-        <p>{{ completedCount() }} of {{ trainees.length }} trainees marked</p>
-      </div>
-      <button
-        mat-flat-button
-        class="save-button"
-        [disabled]="!trainerId || !trainees.length || completedCount() !== trainees.length"
-        (click)="saveAttendance()"
-      >
-        <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-        Save Attendance
-      </button>
-    </div>
-
-    @if (saved) {
-      <div class="success-message" role="status">
-        <mat-icon fontSet="material-symbols-outlined">check_circle</mat-icon>
-        Attendance saved for {{ trainees.length }} trainees.
-      </div>
-    }
-    @if (completedCount() !== trainees.length) {
-      <p class="completion-hint">
-        Select a status for every trainee before saving.
-      </p>
-    }
-
-    <div class="roster">
-      @for (trainee of trainees; track trainee.id; let index = $index) {
-        <mat-card class="roster-row">
-          <span class="row-number">{{ index + 1 }}</span>
-          <span class="trainee-avatar">{{ trainee.name.slice(0, 1) }}</span>
-          <span class="trainee-name">{{ trainee.name }}</span>
-          <div class="status-options" role="group" [attr.aria-label]="'Attendance for ' + trainee.name">
-            @for (status of statuses; track status) {
-              <button
-                type="button"
-                [class]="statusFor(trainee.id) === status ? 'status-option selected ' + status : 'status-option ' + status"
-                [attr.aria-pressed]="statusFor(trainee.id) === status"
-                (click)="setStatus(trainee.id, status)"
-              >
-                {{ statusLabel(status) }}
-              </button>
+    <mat-card class="selection-card">
+      <div class="selection-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Cohort</mat-label>
+          <mat-select
+            [(ngModel)]="cohortId"
+            (selectionChange)="onCohortChange()"
+          >
+            @for (cohort of cohorts(); track cohort.id) {
+              <mat-option [value]="cohort.id">
+                {{ cohort.programName }} · {{ cohort.name }}
+              </mat-option>
             }
-          </div>
-        </mat-card>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Class</mat-label>
+          <mat-select
+            [ngModel]="classId"
+            (ngModelChange)="selectClass($event)"
+            [disabled]="!classes.length"
+          >
+            @for (classItem of classes; track classItem.id) {
+              <mat-option [value]="classItem.id">
+                {{ classItem.date | date: 'MMM d' }} · {{ classItem.topic }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Recording trainer</mat-label>
+          <mat-select [(ngModel)]="trainerId" [disabled]="!trainers.length">
+            @for (trainer of trainers; track trainer.id) {
+              <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if (selectedClass) {
+        <div class="class-meta">
+          <mat-icon fontSet="material-symbols-outlined">event</mat-icon>
+          <span>{{ selectedClass.date | date: 'EEEE, MMMM d, y' }}</span>
+          <span class="meta-dot">·</span>
+          <span>{{ trainees.length }} trainees</span>
+        </div>
       }
-    </div>
-    <div class="mobile-save">
-      <button
-        mat-flat-button
-        class="save-button"
-        [disabled]="!trainerId || !trainees.length || completedCount() !== trainees.length"
-        (click)="saveAttendance()"
-      >
-        <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-        Save Attendance
-      </button>
-    </div>
+    </mat-card>
+
+    @if (errorMessage) {
+      <p class="error-message" role="alert">{{ errorMessage }}</p>
+      @if (attendanceLoadFailed() && classId !== null) {
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="selectClass(classId)"
+        >
+          Retry loading attendance
+        </button>
+      }
+    }
+
+    @if (!selectedClass) {
+      <div class="empty-state">
+        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+        <h2>
+          {{ classes.length ? 'Select a class to take attendance' : 'No classes scheduled' }}
+        </h2>
+        <p>
+          {{ classes.length ? 'Choose the class above to load its enrolled trainee roster.' : 'Schedule a class for this cohort first.' }}
+        </p>
+      </div>
+    } @else if (attendanceLoading()) {
+      <div class="empty-state" role="status">Loading saved attendance...</div>
+    } @else if (!trainees.length) {
+      <div class="empty-state">
+        <mat-icon fontSet="material-symbols-outlined">groups</mat-icon>
+        <h2>No trainees enrolled</h2>
+        <p>Enroll trainees in this cohort before recording attendance.</p>
+      </div>
+    } @else {
+      <div class="roster-heading">
+        <div>
+          <h2>{{ selectedClass.topic }}</h2>
+          <p>{{ completedCount() }} of {{ trainees.length }} trainees marked</p>
+        </div>
+        <button
+          mat-flat-button
+          class="save-button"
+          [disabled]="!trainerId || submitting() || !attendanceReady() || completedCount() !== trainees.length"
+          (click)="saveAttendance()"
+        >
+          <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+          {{ submitting() ? 'Saving...' : 'Save Attendance' }}
+        </button>
+      </div>
+
+      @if (saved) {
+        <div class="success-message" role="status">
+          <mat-icon fontSet="material-symbols-outlined">check_circle</mat-icon>
+          Attendance saved for {{ trainees.length }} trainees.
+        </div>
+      }
+      @if (completedCount() !== trainees.length) {
+        <p class="completion-hint">
+          Select a status for every trainee before saving.
+        </p>
+      }
+
+      <div class="roster">
+        @for (trainee of trainees; track trainee.id; let index = $index) {
+          <mat-card class="roster-row">
+            <span class="row-number">{{ index + 1 }}</span>
+            <span class="trainee-avatar">{{ trainee.name.slice(0, 1) }}</span>
+            <span class="trainee-name">{{ trainee.name }}</span>
+            <div
+              class="status-options"
+              role="group"
+              [attr.aria-label]="'Attendance for ' + trainee.name"
+            >
+              @for (status of statuses; track status) {
+                <button
+                  type="button"
+                  [class]="statusFor(trainee.id) === status ? 'status-option selected ' + status : 'status-option ' + status"
+                  [attr.aria-pressed]="statusFor(trainee.id) === status"
+                  (click)="setStatus(trainee.id, status)"
+                >
+                  {{ statusLabel(status) }}
+                </button>
+              }
+            </div>
+          </mat-card>
+        }
+      </div>
+      <div class="mobile-save">
+        <button
+          mat-flat-button
+          class="save-button"
+          [disabled]="!trainerId || submitting() || !attendanceReady() || completedCount() !== trainees.length"
+          (click)="saveAttendance()"
+        >
+          <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+          {{ submitting() ? 'Saving...' : 'Save Attendance' }}
+        </button>
+      </div>
+    }
   }
 </section>

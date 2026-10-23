@@ -1,0 +1,223 @@
+:host {
+  display: block;
+}
+
+.enrollments-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  color: #11243c;
+}
+
+.page-heading {
+  margin-bottom: 24px;
+}
+
+.page-heading h1 {
+  margin: 0;
+  font-size: clamp(25px, 3vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.page-intro {
+  margin: 8px 0 0;
+  color: #71839a;
+  font-size: 14px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #7789a0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.enrollment-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.enrollment-form,
+.roster-card {
+  padding: 22px;
+  border: 1px solid #e4ebf4;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgb(19 50 84 / 4%);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.section-title h2,
+.roster-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.section-title p {
+  margin: 4px 0 0;
+  color: #71839a;
+  font-size: 13px;
+}
+
+.section-icon {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  color: #1875e5;
+  background: #eaf3ff;
+}
+
+.enrollment-form mat-form-field {
+  width: 100%;
+}
+
+.primary-action {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 9px;
+  color: #fff !important;
+  background: #1875e5;
+}
+
+.roster-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e9eef5;
+}
+
+.trainee-count {
+  padding: 6px 10px;
+  border-radius: 20px;
+  color: #28649f;
+  background: #eaf3ff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.trainee-row {
+  display: flex;
+  min-height: 65px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.trainee-row:last-child {
+  border-bottom: 0;
+}
+
+.row-number {
+  width: 22px;
+  color: #9aa8b8;
+  font-size: 11px;
+}
+
+.avatar {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #7543d7;
+  background: #eee5ff;
+  font-weight: 650;
+}
+
+.trainee-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.enrolled-icon {
+  color: #1a9b67;
+  font-size: 20px;
+}
+
+.all-enrolled,
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 9px;
+  color: #087344;
+  background: #e3f7ed;
+  font-size: 13px;
+}
+
+.all-enrolled {
+  margin-bottom: 14px;
+}
+
+.success-message {
+  margin: 14px 0 0;
+}
+
+.error-message {
+  margin: 14px 0 0;
+  color: #b3261e;
+  font-size: 13px;
+}
+
+.empty-state,
+.empty-roster {
+  display: flex;
+  min-height: 210px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #71839a;
+  text-align: center;
+}
+
+.empty-state mat-icon,
+.empty-roster mat-icon {
+  width: 38px;
+  height: 38px;
+  color: #95a4b7;
+  font-size: 38px;
+}
+
+.empty-state h2 {
+  margin: 10px 0 6px;
+  color: #31445d;
+  font-size: 18px;
+}
+
+.empty-state p,
+.empty-roster p {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .enrollment-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .enrollment-form,
+  .roster-card {
+    padding: 17px;
+  }
+}

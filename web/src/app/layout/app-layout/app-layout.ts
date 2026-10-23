@@ -34,4 +34,7 @@ export class AppLayout {
   protected readonly mobileNavigation = this.navigation.filter(({ label }) =>
     ['Home', 'Programs', 'Attendance'].includes(label),
   );
+  protected readonly secondaryNavigation = this.navigation.filter(
+    ({ label }) => !['Home', 'Programs', 'Attendance'].includes(label),
+  );
 }

@@ -33,10 +33,9 @@ while removing the `/api` prefix (for example, map `/api/programs/` to
 cross-origin requests. Update `src/environments/environment.ts` if production
 uses a different API base URL.
 
-The Programs page uses FastAPI to list and create programs. The Trainees page
-uses FastAPI to list and create trainees. The Cohorts page uses FastAPI for
-cohort listing, creation, counts, trainer assignments, and trainee enrollments.
-Other screens still use shared in-memory demo data.
+The Dashboard, Programs, Cohorts, Trainers, Trainees, Enrollments, Classes, and
+Attendance screens use FastAPI. The Reports screen still uses shared in-memory
+demo data.
 
 ## Code scaffolding
 
