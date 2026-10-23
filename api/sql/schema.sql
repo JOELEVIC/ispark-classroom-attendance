@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS enrollments (
     trainee_id BIGINT NOT NULL REFERENCES trainees(id) ON DELETE RESTRICT,
     cohort_id BIGINT NOT NULL REFERENCES cohorts(id) ON DELETE RESTRICT,
     enrolled_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT enrollments_trainee_cohort_unique UNIQUE (trainee_id, cohort_id),
+    CONSTRAINT enrollments_trainee_cohort_unique UNIQUE (trainee_id, cohort_id)
 );
 
 CREATE TABLE IF NOT EXISTS cohort_classes (
