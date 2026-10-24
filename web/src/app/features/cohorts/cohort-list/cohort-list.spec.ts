@@ -205,6 +205,11 @@ describe('CohortList', () => {
     expect(text).toContain('Enrolled 1 of 2 CSV rows.');
     expect(text).toContain('Row 3');
     expect(text).toContain('No existing trainee has this exact name.');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        '.csv-failure-icon[aria-label="Import issue"]',
+      ),
+    ).toHaveLength(1);
   });
 
   it('creates a cohort through the API', async () => {

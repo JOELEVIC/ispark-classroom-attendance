@@ -139,9 +139,18 @@
                 <ul>
                   @for (failure of result.failures; track failure.row) {
                     <li>
-                      <strong>Row {{ failure.row }}</strong>
-                      <span>{{ failure.name || 'Blank name' }}</span>
-                      <span>{{ failure.reason }}</span>
+                      <mat-icon
+                        class="import-failure-icon"
+                        fontSet="material-symbols-outlined"
+                        aria-label="Import issue"
+                      >
+                        close
+                      </mat-icon>
+                      <div class="import-failure-copy">
+                        <strong>Row {{ failure.row }}</strong>
+                        <span>{{ failure.name || 'Blank name' }}</span>
+                        <span>{{ failure.reason }}</span>
+                      </div>
                     </li>
                   }
                 </ul>

@@ -173,13 +173,29 @@
 
 .import-result li {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 2px 8px;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 2px 7px;
   padding-top: 8px;
   border-top: 1px solid #e2eaf3;
 }
 
-.import-result li span:last-child {
+.import-failure-icon {
+  width: 16px;
+  height: 16px;
+  grid-row: 1 / span 2;
+  color: #c62828;
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.import-failure-copy {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.import-failure-copy span:last-child {
   grid-column: 2;
   color: #71839a;
 }
