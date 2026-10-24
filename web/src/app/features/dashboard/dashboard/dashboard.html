@@ -4,11 +4,7 @@
     <p>Your classroom at a glance.</p>
   </header>
 
-  <section
-    class="stats-grid"
-    aria-label="Program overview"
-    [attr.aria-busy]="loading()"
-  >
+  <section class="stats-grid" aria-label="Program overview" [attr.aria-busy]="loading()">
     @for (stat of stats(); track stat.label) {
       <mat-card class="stat-card">
         <span class="stat-icon" [class]="'stat-icon ' + stat.color">
@@ -37,18 +33,75 @@
     </div>
   }
 
-  <div class="action-area">
-    <a class="attendance-card" routerLink="/attendance">
-      <span class="attendance-card-icon">
-        <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
-      </span>
-      <span class="attendance-card-copy">
-        <strong>Take Attendance</strong>
-        <span>Mark your trainees for today's class</span>
-      </span>
-      <mat-icon class="attendance-card-arrow" fontSet="material-symbols-outlined">
-        arrow_forward
-      </mat-icon>
-    </a>
-  </div>
+  <section class="action-area" aria-labelledby="quick-actions-heading">
+    <h2 id="quick-actions-heading">Quick actions</h2>
+    @if (loading()) {
+      <p class="action-hint" role="status">Checking today’s classes...</p>
+    } @else if (errorMessage()) {
+      <a class="attendance-card schedule-card" routerLink="/classes">
+        <span class="attendance-card-icon">
+          <mat-icon fontSet="material-symbols-outlined">event</mat-icon>
+        </span>
+        <span class="attendance-card-copy">
+          <strong>Couldn’t check today’s classes</strong>
+          <span>Open classes to choose or schedule a session.</span>
+        </span>
+        <mat-icon class="attendance-card-arrow" fontSet="material-symbols-outlined">
+          arrow_forward
+        </mat-icon>
+      </a>
+    } @else if (todaysClasses().length === 1) {
+      @for (classItem of todaysClasses(); track classItem.id) {
+        <a
+          class="attendance-card"
+          routerLink="/attendance"
+          [queryParams]="{ classId: classItem.id }"
+        >
+          <span class="attendance-card-icon">
+            <mat-icon fontSet="material-symbols-outlined">fact_check</mat-icon>
+          </span>
+          <span class="attendance-card-copy">
+            <strong>Take attendance</strong>
+            <span>
+              {{ classItem.programName }} · {{ classItem.cohortName }} ·
+              {{ classItem.topic }}
+            </span>
+          </span>
+          <mat-icon class="attendance-card-arrow" fontSet="material-symbols-outlined">
+            arrow_forward
+          </mat-icon>
+        </a>
+      }
+    } @else if (todaysClasses().length > 1) {
+      <p class="action-hint">Choose the class you’re taking attendance for today.</p>
+      <div class="today-class-list">
+        @for (classItem of todaysClasses(); track classItem.id) {
+          <a
+            class="today-class-link"
+            routerLink="/attendance"
+            [queryParams]="{ classId: classItem.id }"
+          >
+            <span>
+              <strong>{{ classItem.topic }}</strong>
+              <small>{{ classItem.programName }} · {{ classItem.cohortName }}</small>
+            </span>
+            <mat-icon fontSet="material-symbols-outlined">arrow_forward</mat-icon>
+          </a>
+        }
+      </div>
+    } @else {
+      <a class="attendance-card schedule-card" routerLink="/classes">
+        <span class="attendance-card-icon">
+          <mat-icon fontSet="material-symbols-outlined">event</mat-icon>
+        </span>
+        <span class="attendance-card-copy">
+          <strong>No class scheduled today</strong>
+          <span>View classes or schedule one for a cohort.</span>
+        </span>
+        <mat-icon class="attendance-card-arrow" fontSet="material-symbols-outlined">
+          arrow_forward
+        </mat-icon>
+      </a>
+    }
+  </section>
 </section>

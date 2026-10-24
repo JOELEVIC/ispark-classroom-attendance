@@ -53,10 +53,7 @@
 
   <mat-form-field class="program-filter" appearance="outline">
     <mat-label>Filter by program</mat-label>
-    <mat-select
-      [(ngModel)]="programFilterId"
-      (selectionChange)="onProgramChange()"
-    >
+    <mat-select [(ngModel)]="programFilterId" (selectionChange)="onProgramChange()">
       <mat-option [value]="null">All programs</mat-option>
       @for (program of programs(); track program.id) {
         <mat-option [value]="program.id">{{ program.name }}</mat-option>
@@ -69,9 +66,7 @@
   } @else if (loadError()) {
     <div class="empty-state error-message" role="alert">
       <p>{{ loadError() }}</p>
-      <button mat-stroked-button type="button" (click)="loadDirectory()">
-        Retry
-      </button>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">Retry</button>
     </div>
   } @else {
     <div class="cohort-layout">
@@ -89,8 +84,7 @@
               <strong>{{ cohort.name }}</strong>
               <span>{{ cohort.programName }}</span>
               <small>
-                {{ cohort.trainees.length }} trainees ·
-                {{ cohort.trainers.length }} trainers
+                {{ cohort.trainees.length }} trainees · {{ cohort.trainers.length }} trainers
               </small>
             </span>
             <mat-icon fontSet="material-symbols-outlined">chevron_right</mat-icon>
@@ -112,12 +106,19 @@
           </p>
 
           <div class="detail-stats">
-            <span><strong>{{ cohort.trainees.length }}</strong> Trainees</span>
-            <span><strong>{{ cohort.classCount }}</strong> Classes</span>
+            <span
+              ><strong>{{ cohort.trainees.length }}</strong> Trainees</span
+            >
+            <span
+              ><strong>{{ cohort.classCount }}</strong> Classes</span
+            >
           </div>
 
           @if (errorMessage) {
             <p class="error-message" role="alert">{{ errorMessage }}</p>
+          }
+          @if (successMessage) {
+            <p class="success-message" role="status">{{ successMessage }}</p>
           }
 
           <div class="section-heading">
@@ -145,13 +146,14 @@
                 </mat-select>
               </mat-form-field>
               <button
-                mat-icon-button
+                mat-flat-button
                 class="assign-button"
                 aria-label="Enroll selected trainee"
                 [disabled]="selectedTraineeId === null || submitting()"
                 (click)="enrollTrainee()"
               >
-                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+                Enroll trainee
               </button>
             </div>
           } @else {
@@ -180,13 +182,14 @@
               </mat-select>
             </mat-form-field>
             <button
-              mat-icon-button
+              mat-flat-button
               class="assign-button"
               aria-label="Assign selected trainer"
               [disabled]="selectedTrainerId === null || submitting()"
               (click)="assignTrainer()"
             >
-              <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+              <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+              Assign trainer
             </button>
           </div>
         </mat-card>

@@ -83,6 +83,12 @@ describe('CohortList', () => {
   });
 
   it('enrolls a trainee and updates the cohort details', async () => {
+    const enrollButton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'button[aria-label="Enroll selected trainee"]',
+    );
+    expect(enrollButton?.textContent).toContain('Enroll trainee');
+    expect(enrollButton?.disabled).toBe(true);
+
     const loader = TestbedHarnessEnvironment.loader(fixture);
     const selects = await loader.getAllHarnesses(MatSelectHarness);
     await selects[1].open();
@@ -94,27 +100,22 @@ describe('CohortList', () => {
       }
     }
 
-    (
-      fixture.nativeElement as HTMLElement
-    ).querySelector<HTMLButtonElement>(
-      'button[aria-label="Enroll selected trainee"]',
-    )?.click();
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('button[aria-label="Enroll selected trainee"]')
+      ?.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(api.enrollTrainee).toHaveBeenCalledWith(10, 3);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Jo Trainee');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('3 Trainees');
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Jo Trainee',
-    );
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      '3 Trainees',
+      'Jo Trainee enrolled in Cohort A.',
     );
   });
 
   it('creates a cohort through the API', async () => {
-    const buttons = Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
-    );
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
     buttons.find((button) => button.textContent?.includes('New Cohort'))?.click();
     fixture.detectChanges();
 
@@ -134,9 +135,7 @@ describe('CohortList', () => {
     dateInputs[1].dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
-    )
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Create Cohort'))
       ?.click();
     await fixture.whenStable();
@@ -148,9 +147,7 @@ describe('CohortList', () => {
       startDate: '2026-07-01',
       endDate: '2026-12-31',
     });
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
-      'Cohort B',
-    );
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cohort B');
   });
 
   it('logs directory errors and shows a concise message', async () => {

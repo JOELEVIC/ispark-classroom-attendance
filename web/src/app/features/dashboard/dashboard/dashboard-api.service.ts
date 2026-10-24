@@ -5,10 +5,13 @@ import { environment } from '../../../../environments/environment';
 
 interface Program {
   id: number;
+  name: string;
 }
 
 interface Cohort {
   id: number;
+  name: string;
+  programName: string;
 }
 
 interface Trainee {
@@ -17,6 +20,11 @@ interface Trainee {
 
 interface ClassSession {
   id: number;
+  cohortId: number;
+  cohortName: string;
+  programName: string;
+  date: string;
+  topic: string;
 }
 
 interface AttendanceRecord {
@@ -28,6 +36,16 @@ export interface DashboardStats {
   cohorts: number;
   trainees: number;
   averageAttendance: number | null;
+  todaysClasses: DashboardClass[];
+}
+
+export interface DashboardClass {
+  id: number;
+  cohortId: number;
+  cohortName: string;
+  programName: string;
+  date: string;
+  topic: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,32 +54,29 @@ export class DashboardApiService {
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
   getStats(): Observable<DashboardStats> {
-    return this.http
-      .get<Program[]>(`${this.apiBaseUrl}/programs/`)
-      .pipe(
-        switchMap((programs) =>
-          this.getCohorts(programs).pipe(
-            map((cohorts) => ({ programs, cohorts })),
-          ),
-        ),
-        switchMap(({ programs, cohorts }) =>
-          forkJoin({
-            trainees: this.http.get<Trainee[]>(`${this.apiBaseUrl}/trainees/`),
-            classes: this.getClasses(cohorts),
-          }).pipe(
-            switchMap(({ trainees, classes }) =>
-              this.getAttendance(classes).pipe(
-                map((attendanceGroups) => ({
-                  programs: programs.length,
-                  cohorts: cohorts.length,
-                  trainees: trainees.length,
-                  averageAttendance: this.averageAttendance(attendanceGroups),
-                })),
-              ),
+    return this.http.get<Program[]>(`${this.apiBaseUrl}/programs/`).pipe(
+      switchMap((programs) =>
+        this.getCohorts(programs).pipe(map((cohorts) => ({ programs, cohorts }))),
+      ),
+      switchMap(({ programs, cohorts }) =>
+        forkJoin({
+          trainees: this.http.get<Trainee[]>(`${this.apiBaseUrl}/trainees/`),
+          classes: this.getClasses(cohorts),
+        }).pipe(
+          switchMap(({ trainees, classes }) =>
+            this.getAttendance(classes).pipe(
+              map((attendanceGroups) => ({
+                programs: programs.length,
+                cohorts: cohorts.length,
+                trainees: trainees.length,
+                averageAttendance: this.averageAttendance(attendanceGroups),
+                todaysClasses: classes.filter((classItem) => classItem.date === this.localDate()),
+              })),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   private getCohorts(programs: Program[]): Observable<Cohort[]> {
@@ -71,8 +86,13 @@ export class DashboardApiService {
 
     return forkJoin(
       programs.map((program) =>
-        this.http.get<Cohort[]>(
-          `${this.apiBaseUrl}/cohorts/by-program/${program.id}`,
+        this.http.get<Cohort[]>(`${this.apiBaseUrl}/cohorts/by-program/${program.id}`).pipe(
+          map((cohorts) =>
+            cohorts.map((cohort) => ({
+              ...cohort,
+              programName: program.name,
+            })),
+          ),
         ),
       ),
     ).pipe(map((groups) => groups.flat()));
@@ -85,16 +105,32 @@ export class DashboardApiService {
 
     return forkJoin(
       cohorts.map((cohort) =>
-        this.http.get<ClassSession[]>(
-          `${this.apiBaseUrl}/cohorts/${cohort.id}/classes`,
-        ),
+        this.http
+          .get<
+            {
+              id: number;
+              cohort_id: number;
+              class_date: string;
+              topic: string;
+            }[]
+          >(`${this.apiBaseUrl}/cohorts/${cohort.id}/classes`)
+          .pipe(
+            map((classes) =>
+              classes.map((classItem) => ({
+                id: classItem.id,
+                cohortId: cohort.id,
+                cohortName: cohort.name,
+                programName: cohort.programName,
+                date: classItem.class_date,
+                topic: classItem.topic,
+              })),
+            ),
+          ),
       ),
     ).pipe(map((groups) => groups.flat()));
   }
 
-  private getAttendance(
-    classes: ClassSession[],
-  ): Observable<AttendanceRecord[][]> {
+  private getAttendance(classes: ClassSession[]): Observable<AttendanceRecord[][]> {
     if (classes.length === 0) {
       return of([]);
     }
@@ -108,9 +144,7 @@ export class DashboardApiService {
     );
   }
 
-  private averageAttendance(
-    attendanceGroups: AttendanceRecord[][],
-  ): number | null {
+  private averageAttendance(attendanceGroups: AttendanceRecord[][]): number | null {
     let attended = 0;
     let eligible = 0;
 
@@ -132,5 +166,14 @@ export class DashboardApiService {
     }
 
     return eligible === 0 ? null : (attended / eligible) * 100;
+  }
+
+  private localDate(): string {
+    const today = new Date();
+    return [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, '0'),
+      String(today.getDate()).padStart(2, '0'),
+    ].join('-');
   }
 }

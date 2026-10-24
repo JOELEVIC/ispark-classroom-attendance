@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { DashboardApiService, DashboardStats } from './dashboard-api.service';
+import { DashboardApiService, DashboardClass, DashboardStats } from './dashboard-api.service';
 
 @Component({
   imports: [MatButtonModule, MatCardModule, MatIconModule, RouterLink],
@@ -15,6 +15,7 @@ export class Dashboard {
   private readonly dashboardApi = inject(DashboardApiService);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly todaysClasses = signal<DashboardClass[]>([]);
   protected readonly stats = signal([
     {
       label: 'Programs',
@@ -57,6 +58,7 @@ export class Dashboard {
     this.dashboardApi.getStats().subscribe({
       next: (dashboardStats) => {
         this.updateStats(dashboardStats);
+        this.todaysClasses.set(dashboardStats.todaysClasses);
         this.loading.set(false);
       },
       error: (error: unknown) => {
@@ -78,8 +80,6 @@ export class Dashboard {
         ? '—'
         : `${Math.round(dashboardStats.averageAttendance)}%`,
     ];
-    this.stats.update((stats) =>
-      stats.map((stat, index) => ({ ...stat, value: values[index] })),
-    );
+    this.stats.update((stats) => stats.map((stat, index) => ({ ...stat, value: values[index] })));
   }
 }

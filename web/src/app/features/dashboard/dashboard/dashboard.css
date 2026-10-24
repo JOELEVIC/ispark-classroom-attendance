@@ -134,19 +134,73 @@
 }
 
 .action-area {
+  margin-top: 28px;
+}
+
+.action-area h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.action-hint {
+  margin: 0 0 12px;
+  color: #71839a;
+  font-size: 13px;
+}
+
+.today-class-list {
   display: grid;
-  flex: 1;
-  min-height: 230px;
-  place-items: center;
+  max-width: 680px;
+  gap: 8px;
+}
+
+.today-class-link {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid #dce8f5;
+  border-radius: 12px;
+  color: #11243c;
+  background: #fff;
+  text-decoration: none;
+}
+
+.today-class-link:hover {
+  border-color: #b7d5f7;
+  background: #f5f9ff;
+}
+
+.today-class-link:focus-visible {
+  outline: 3px solid #1875e5;
+  outline-offset: 2px;
+}
+
+.today-class-link > span {
+  display: grid;
+  gap: 4px;
+}
+
+.today-class-link small {
+  color: #71839a;
+  font-size: 12px;
+}
+
+.today-class-link mat-icon {
+  flex: 0 0 auto;
+  color: #2479da;
 }
 
 .attendance-card {
   display: flex;
-  width: min(100%, 540px);
-  min-height: 190px;
+  width: min(100%, 680px);
+  min-height: 104px;
   align-items: center;
-  gap: 22px;
-  padding: 30px;
+  gap: 18px;
+  padding: 18px 22px;
   border: 1px solid #d7e7fa;
   border-radius: 20px;
   color: #11243c;
@@ -211,6 +265,12 @@
   line-height: 1.4;
 }
 
+.schedule-card {
+  border-color: #e4ebf4;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(19 50 84 / 3%);
+}
+
 .attendance-card-arrow {
   flex: 0 0 auto;
   color: #2479da;
@@ -218,9 +278,7 @@
 
 @media (max-width: 900px) {
   .dashboard {
-    min-height: calc(
-      100dvh - 64px - 28px - var(--mobile-nav-height) - 24px
-    );
+    min-height: calc(100dvh - 64px - 28px - var(--mobile-nav-height) - 24px);
   }
 
   .stats-grid {
@@ -269,14 +327,14 @@
   }
 
   .action-area {
-    min-height: 210px;
+    margin-top: 24px;
   }
 
   .attendance-card {
     width: 100%;
-    min-height: 170px;
+    min-height: 96px;
     gap: 16px;
-    padding: 24px 20px;
+    padding: 18px 16px;
     border-radius: 16px;
   }
 
@@ -331,13 +389,13 @@
   }
 
   .action-area {
-    min-height: 190px;
+    margin-top: 22px;
   }
 
   .attendance-card {
-    min-height: 154px;
+    min-height: 88px;
     gap: 13px;
-    padding: 20px 16px;
+    padding: 16px 14px;
   }
 
   .attendance-card-icon {
@@ -359,5 +417,4 @@
   .attendance-card-copy > span {
     font-size: 12px;
   }
-
 }

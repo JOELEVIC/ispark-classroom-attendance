@@ -50,6 +50,7 @@ export class CohortList {
   protected startDate = '';
   protected endDate = '';
   protected errorMessage = '';
+  protected successMessage = '';
 
   constructor() {
     this.loadDirectory();
@@ -57,31 +58,25 @@ export class CohortList {
 
   protected get filteredCohorts(): CohortRecord[] {
     return this.cohorts().filter(
-      (cohort) =>
-        this.programFilterId === null ||
-        cohort.programId === this.programFilterId,
+      (cohort) => this.programFilterId === null || cohort.programId === this.programFilterId,
     );
   }
 
   protected get selectedCohort(): CohortRecord | undefined {
-    return this.cohorts().find(
-      (cohort) => cohort.id === this.selectedCohortId,
-    );
+    return this.cohorts().find((cohort) => cohort.id === this.selectedCohortId);
   }
 
   protected get availableTrainers(): CohortTrainer[] {
     const cohort = this.selectedCohort;
     return this.trainers().filter(
-      (trainer) =>
-        !cohort?.trainers.some((assigned) => assigned.id === trainer.id),
+      (trainer) => !cohort?.trainers.some((assigned) => assigned.id === trainer.id),
     );
   }
 
   protected get availableTrainees(): CohortTrainee[] {
     const cohort = this.selectedCohort;
     return this.trainees().filter(
-      (trainee) =>
-        !cohort?.trainees.some((enrolled) => enrolled.id === trainee.id),
+      (trainee) => !cohort?.trainees.some((enrolled) => enrolled.id === trainee.id),
     );
   }
 
@@ -112,11 +107,10 @@ export class CohortList {
   }
 
   protected onProgramChange(): void {
+    this.successMessage = '';
     if (
       this.selectedCohortId !== null &&
-      !this.filteredCohorts.some(
-        (cohort) => cohort.id === this.selectedCohortId,
-      )
+      !this.filteredCohorts.some((cohort) => cohort.id === this.selectedCohortId)
     ) {
       this.selectedCohortId = this.filteredCohorts[0]?.id ?? null;
       this.clearAssignmentSelections();
@@ -124,6 +118,7 @@ export class CohortList {
   }
 
   protected selectCohort(cohortId: number): void {
+    this.successMessage = '';
     if (this.selectedCohortId !== cohortId) {
       this.selectedCohortId = cohortId;
       this.clearAssignmentSelections();
@@ -134,6 +129,7 @@ export class CohortList {
   protected openCreateForm(): void {
     this.showCreateForm = !this.showCreateForm;
     this.errorMessage = '';
+    this.successMessage = '';
     if (this.createProgramId === null) {
       this.createProgramId = this.programs()[0]?.id ?? null;
     }
@@ -147,8 +143,7 @@ export class CohortList {
       !this.endDate ||
       this.endDate <= this.startDate
     ) {
-      this.errorMessage =
-        'Choose a program, enter a cohort name, and select a valid date range.';
+      this.errorMessage = 'Choose a program, enter a cohort name, and select a valid date range.';
       return;
     }
 
@@ -162,9 +157,7 @@ export class CohortList {
     this.submitting.set(true);
     this.cohortApi.create(payload).subscribe({
       next: (cohort) => {
-        const program = this.programs().find(
-          (item) => item.id === cohort.programId,
-        );
+        const program = this.programs().find((item) => item.id === cohort.programId);
         const createdCohort = {
           ...cohort,
           programName: program?.name ?? '',
@@ -195,6 +188,7 @@ export class CohortList {
     }
 
     this.errorMessage = '';
+    this.successMessage = '';
     this.submitting.set(true);
     this.cohortApi.assignTrainer(cohort.id, trainerId).subscribe({
       next: () => {
@@ -202,19 +196,19 @@ export class CohortList {
         if (trainer) {
           this.cohorts.update((cohorts) =>
             cohorts.map((item) =>
-              item.id === cohort.id
-                ? { ...item, trainers: [...item.trainers, trainer] }
-                : item,
+              item.id === cohort.id ? { ...item, trainers: [...item.trainers, trainer] } : item,
             ),
           );
         }
+        this.successMessage = trainer
+          ? `${trainer.name} assigned to ${cohort.name}.`
+          : 'Trainer assigned to cohort.';
         this.selectedTrainerId = null;
         this.submitting.set(false);
       },
       error: (error: unknown) => {
         console.error('Failed to assign trainer to cohort', error);
-        this.errorMessage =
-          "Couldn't assign trainer. They may already be assigned to this cohort.";
+        this.errorMessage = "Couldn't assign trainer. They may already be assigned to this cohort.";
         this.submitting.set(false);
       },
     });
@@ -228,6 +222,7 @@ export class CohortList {
     }
 
     this.errorMessage = '';
+    this.successMessage = '';
     this.submitting.set(true);
     this.cohortApi.enrollTrainee(cohort.id, traineeId).subscribe({
       next: () => {
@@ -235,19 +230,19 @@ export class CohortList {
         if (trainee) {
           this.cohorts.update((cohorts) =>
             cohorts.map((item) =>
-              item.id === cohort.id
-                ? { ...item, trainees: [...item.trainees, trainee] }
-                : item,
+              item.id === cohort.id ? { ...item, trainees: [...item.trainees, trainee] } : item,
             ),
           );
         }
+        this.successMessage = trainee
+          ? `${trainee.name} enrolled in ${cohort.name}.`
+          : 'Trainee enrolled in cohort.';
         this.selectedTraineeId = null;
         this.submitting.set(false);
       },
       error: (error: unknown) => {
         console.error('Failed to enroll trainee', error);
-        this.errorMessage =
-          "Couldn't enroll trainee. They may already be in this cohort.";
+        this.errorMessage = "Couldn't enroll trainee. They may already be in this cohort.";
         this.submitting.set(false);
       },
     });
