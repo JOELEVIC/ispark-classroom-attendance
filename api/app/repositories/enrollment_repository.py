@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from app.db.connection import get_db_connection
+from app.repositories.cohort_repository import lock_active_cohort
 
 
 class EnrollmentImportRow(TypedDict):
@@ -29,6 +30,7 @@ def enroll_trainee(cohort_id: int, trainee_id: int):
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            lock_active_cohort(cur, cohort_id)
             cur.execute(query, (cohort_id, trainee_id))
             return cur.fetchone()
 
@@ -67,12 +69,10 @@ def get_trainee_enrollments(trainee_id: int):
 
 def import_enrollments_by_name(
     cohort_id: int, rows: list[EnrollmentImportRow]
-) -> EnrollmentImportResult | None:
+) -> EnrollmentImportResult:
     with get_db_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT 1 FROM cohorts WHERE id = %s", (cohort_id,))
-            if cur.fetchone() is None:
-                return None
+            lock_active_cohort(cur, cohort_id)
 
             trainees_by_name: dict[str, list[int]] = {}
             names = sorted(

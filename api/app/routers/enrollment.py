@@ -6,6 +6,11 @@ from fastapi import APIRouter, File, HTTPException, UploadFile, status
 from psycopg import IntegrityError
 
 from app.repositories import enrollment_repository
+from app.repositories.cohort_repository import (
+    CohortFinishedError,
+    CohortNotFoundError,
+)
+from app.routers.cohort_errors import raise_cohort_error
 from app.schemas.enrollment import (
     EnrollmentCreate,
     EnrollmentImportRespond,
@@ -26,6 +31,8 @@ def enroll_trainee(cohort_id: int, payload: EnrollmentCreate):
         return enrollment_repository.enroll_trainee(
             cohort_id, payload.trainee_id
         )
+    except (CohortNotFoundError, CohortFinishedError) as exc:
+        raise_cohort_error(exc)
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,
@@ -93,7 +100,9 @@ async def import_enrollments(cohort_id: int, file: UploadFile = File(...)):
             detail="CSV file is malformed.",
         ) from exc
 
-    result = enrollment_repository.import_enrollments_by_name(cohort_id, rows)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Cohort not found.")
-    return result
+    try:
+        return enrollment_repository.import_enrollments_by_name(
+            cohort_id, rows
+        )
+    except (CohortNotFoundError, CohortFinishedError) as exc:
+        raise_cohort_error(exc)

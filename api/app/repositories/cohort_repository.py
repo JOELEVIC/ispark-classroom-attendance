@@ -3,6 +3,26 @@ from datetime import date
 from app.db.connection import get_db_connection
 
 
+class CohortNotFoundError(Exception):
+    pass
+
+
+class CohortFinishedError(Exception):
+    pass
+
+
+def lock_active_cohort(cur, cohort_id: int) -> None:
+    cur.execute(
+        "SELECT is_finished FROM cohorts WHERE id = %s FOR UPDATE",
+        (cohort_id,),
+    )
+    cohort = cur.fetchone()
+    if cohort is None:
+        raise CohortNotFoundError
+    if cohort["is_finished"]:
+        raise CohortFinishedError
+
+
 def create_cohort(
     program_id: int,
     name: str,
@@ -12,7 +32,7 @@ def create_cohort(
     query = """
         INSERT INTO cohorts (program_id, name, start_date, end_date)
         VALUES (%s, %s, %s, %s)
-        RETURNING id, program_id, name, start_date, end_date;
+        RETURNING id, program_id, name, start_date, end_date, is_finished;
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
@@ -22,7 +42,7 @@ def create_cohort(
 
 def get_cohort_by_id(cohort_id: int):
     query = """
-        SELECT id, program_id, name, start_date, end_date
+        SELECT id, program_id, name, start_date, end_date, is_finished
         FROM cohorts
         WHERE id = %s;
     """
@@ -32,16 +52,17 @@ def get_cohort_by_id(cohort_id: int):
             return cur.fetchone()
 
 
-def get_cohorts_by_program(program_id: int):
+def get_cohorts_by_program(program_id: int, include_finished: bool = False):
     query = """
-        SELECT id, program_id, name, start_date, end_date
+        SELECT id, program_id, name, start_date, end_date, is_finished
         FROM cohorts
         WHERE program_id = %s
+          AND (%s OR is_finished = FALSE)
         ORDER BY start_date, id;
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(query, (program_id,))
+            cur.execute(query, (program_id, include_finished))
             return cur.fetchall()
 
 
@@ -53,7 +74,21 @@ def assign_trainer(cohort_id: int, trainer_id: int):
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            lock_active_cohort(cur, cohort_id)
             cur.execute(query, (cohort_id, trainer_id))
+            return cur.fetchone()
+
+
+def finish_cohort(cohort_id: int):
+    query = """
+        UPDATE cohorts
+        SET is_finished = TRUE
+        WHERE id = %s
+        RETURNING id, program_id, name, start_date, end_date, is_finished;
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, (cohort_id,))
             return cur.fetchone()
 
 

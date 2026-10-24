@@ -3,6 +3,11 @@ from fastapi import APIRouter, HTTPException, Path, Query, status
 from psycopg import IntegrityError
 
 from app.repositories import attendance_repository
+from app.repositories.cohort_repository import (
+    CohortFinishedError,
+    CohortNotFoundError,
+)
+from app.routers.cohort_errors import raise_cohort_error
 from app.schemas.attendance import (
     AttendanceBatchCreate,
     AttendanceChangeHistoryRespond,
@@ -34,6 +39,8 @@ def record_class_attendance(
             )
             results.append(result)
 
+    except (CohortNotFoundError, CohortFinishedError) as exc:
+        raise_cohort_error(exc)
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,

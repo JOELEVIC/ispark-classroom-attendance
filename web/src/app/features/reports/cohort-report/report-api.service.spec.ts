@@ -27,6 +27,18 @@ describe('ReportApiService', () => {
     expect(result).toEqual([{ id: 10, name: 'Cohort A', programName: 'Web Development' }]);
   });
 
+  it('includes finished cohorts only when requested', () => {
+    service.getCohorts(true).subscribe();
+    httpTesting.expectOne('/api/programs/').flush([{ id: 1, name: 'Web Development' }]);
+    httpTesting
+      .expectOne(
+        (request) =>
+          request.url === '/api/cohorts/by-program/1' &&
+          request.params.get('include_finished') === 'true',
+      )
+      .flush([]);
+  });
+
   it('maps the cohort attendance report response', () => {
     let result: unknown;
     service.getCohortReport(10).subscribe((trainees) => (result = trainees));

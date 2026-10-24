@@ -14,6 +14,7 @@ interface ApiCohort {
   name: string;
   start_date: string;
   end_date: string;
+  is_finished: boolean;
 }
 
 interface ApiTrainer {
@@ -53,6 +54,7 @@ export interface CohortRecord {
   name: string;
   startDate: string;
   endDate: string;
+  isFinished: boolean;
   trainers: CohortTrainer[];
   trainees: CohortTrainee[];
   classCount: number;
@@ -77,20 +79,14 @@ export class CohortApiService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  listDirectory(): Observable<CohortDirectory> {
+  listDirectory(includeFinished = false): Observable<CohortDirectory> {
     return forkJoin({
-      programs: this.http.get<CohortProgram[]>(
-        `${this.apiBaseUrl}/programs/`,
-      ),
-      trainers: this.http.get<CohortTrainer[]>(
-        `${this.apiBaseUrl}/trainers/`,
-      ),
-      trainees: this.http.get<CohortTrainee[]>(
-        `${this.apiBaseUrl}/trainees/`,
-      ),
+      programs: this.http.get<CohortProgram[]>(`${this.apiBaseUrl}/programs/`),
+      trainers: this.http.get<CohortTrainer[]>(`${this.apiBaseUrl}/trainers/`),
+      trainees: this.http.get<CohortTrainee[]>(`${this.apiBaseUrl}/trainees/`),
     }).pipe(
       switchMap(({ programs, trainers, trainees }) =>
-        this.getCohorts(programs).pipe(
+        this.getCohorts(programs, includeFinished).pipe(
           map((cohorts) => ({ programs, trainers, trainees, cohorts })),
         ),
       ),
@@ -105,36 +101,28 @@ export class CohortApiService {
         start_date: payload.startDate,
         end_date: payload.endDate,
       })
-      .pipe(
-        map((cohort) =>
-          this.mapCohort(
-            cohort,
-            payload.programId,
-            '',
-            [],
-            [],
-            0,
-          ),
-        ),
-      );
+      .pipe(map((cohort) => this.mapCohort(cohort, payload.programId, '', [], [], 0)));
   }
 
   enrollTrainee(cohortId: number, traineeId: number): Observable<unknown> {
-    return this.http.post(
-      `${this.apiBaseUrl}/cohorts/${cohortId}/enrollments`,
-      { trainee_id: traineeId },
-    );
+    return this.http.post(`${this.apiBaseUrl}/cohorts/${cohortId}/enrollments`, {
+      trainee_id: traineeId,
+    });
   }
 
   assignTrainer(cohortId: number, trainerId: number): Observable<unknown> {
-    return this.http.post(
-      `${this.apiBaseUrl}/cohorts/${cohortId}/trainers`,
-      { trainer_id: trainerId },
-    );
+    return this.http.post(`${this.apiBaseUrl}/cohorts/${cohortId}/trainers`, {
+      trainer_id: trainerId,
+    });
+  }
+
+  finish(cohortId: number): Observable<unknown> {
+    return this.http.post(`${this.apiBaseUrl}/cohorts/${cohortId}/finish`, {});
   }
 
   private getCohorts(
     programs: CohortProgram[],
+    includeFinished: boolean,
   ): Observable<CohortRecord[]> {
     if (programs.length === 0) {
       return of([]);
@@ -145,20 +133,14 @@ export class CohortApiService {
         this.http
           .get<ApiCohort[]>(
             `${this.apiBaseUrl}/cohorts/by-program/${program.id}`,
+            includeFinished ? { params: { include_finished: true } } : {},
           )
-          .pipe(
-            switchMap((cohorts) =>
-              this.getCohortDetails(cohorts, program.name),
-            ),
-          ),
+          .pipe(switchMap((cohorts) => this.getCohortDetails(cohorts, program.name))),
       ),
     ).pipe(map((groups) => groups.flat()));
   }
 
-  private getCohortDetails(
-    cohorts: ApiCohort[],
-    programName: string,
-  ): Observable<CohortRecord[]> {
+  private getCohortDetails(cohorts: ApiCohort[], programName: string): Observable<CohortRecord[]> {
     if (cohorts.length === 0) {
       return of([]);
     }
@@ -172,9 +154,7 @@ export class CohortApiService {
           enrollments: this.http.get<ApiEnrollment[]>(
             `${this.apiBaseUrl}/cohorts/${cohort.id}/enrollments`,
           ),
-          classes: this.http.get<ApiClass[]>(
-            `${this.apiBaseUrl}/cohorts/${cohort.id}/classes`,
-          ),
+          classes: this.http.get<ApiClass[]>(`${this.apiBaseUrl}/cohorts/${cohort.id}/classes`),
         }).pipe(
           map(({ trainers, enrollments, classes }) =>
             this.mapCohort(
@@ -209,6 +189,7 @@ export class CohortApiService {
       name: cohort.name,
       startDate: cohort.start_date,
       endDate: cohort.end_date,
+      isFinished: cohort.is_finished,
       trainers,
       trainees,
       classCount,

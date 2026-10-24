@@ -17,6 +17,8 @@ class FakeCursor:
         self.parameters = parameters
 
     def fetchone(self):
+        if "SELECT is_finished" in self.query:
+            return {"is_finished": False}
         return {"status": self.parameters[3]}
 
     def fetchall(self):

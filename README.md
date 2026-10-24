@@ -152,6 +152,16 @@ time, with a total count and Previous/Next page controls. The existing
 `GET /trainees/` directory endpoint remains available to enrollment workflows;
 the paginated search uses `GET /trainees/search?q=<name>&page=1&page_size=10`.
 
+## Finished cohorts
+
+From the Cohorts page, choose **Mark as finished** and confirm. A finished
+cohort and its attendance, classes, enrollments, and trainer assignments are
+preserved and remain viewable, but the cohort is read-only. Finished cohorts
+are excluded from default cohort selectors. Use **Show finished cohorts** on
+the Cohorts page or **Include finished cohorts** on Cohort Report to access
+them. The API rejects further enrollment, trainer assignment, class scheduling,
+and attendance changes for a finished cohort.
+
 ## Recurring class schedules
 
 On the Classes page, choose **Repeating schedule**, enter a shared topic and

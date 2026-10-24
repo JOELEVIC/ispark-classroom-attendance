@@ -48,7 +48,29 @@
 }
 
 .cohort-select {
-  width: min(100%, 370px);
+  width: 100%;
+}
+
+.cohort-controls {
+  display: flex;
+  width: min(100%, 480px);
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cohort-toggle {
+  min-width: 205px;
+  white-space: nowrap;
+  --mat-slide-toggle-selected-track-color: #1875e5;
+  --mat-slide-toggle-selected-hover-track-color: #1268d2;
+  --mat-slide-toggle-selected-focus-track-color: #1268d2;
+  --mat-slide-toggle-selected-pressed-track-color: #0e5fbe;
+  --mat-slide-toggle-selected-track-outline-color: #1875e5;
+  --mat-slide-toggle-selected-handle-color: #1875e5;
+  --mat-slide-toggle-selected-hover-handle-color: #1268d2;
+  --mat-slide-toggle-selected-focus-handle-color: #1268d2;
+  --mat-slide-toggle-selected-pressed-handle-color: #0e5fbe;
 }
 
 .report-context {
@@ -384,9 +406,24 @@ tbody tr.selected-row {
     gap: 8px;
   }
 
+  .page-heading {
+    gap: 16px;
+  }
+
+  .cohort-controls,
   .cohort-select,
   .class-summary-section .section-heading mat-form-field {
     width: 100%;
+  }
+
+  .cohort-controls {
+    width: 100%;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .cohort-toggle {
+    min-width: 220px;
   }
 
   .table-wrap {

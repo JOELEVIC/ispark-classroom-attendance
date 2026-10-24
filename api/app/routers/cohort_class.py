@@ -5,6 +5,11 @@ from fastapi import APIRouter, HTTPException, Query, status
 from psycopg import IntegrityError
 
 from app.repositories import cohort_class_repository
+from app.repositories.cohort_repository import (
+    CohortFinishedError,
+    CohortNotFoundError,
+)
+from app.routers.cohort_errors import raise_cohort_error
 from app.schemas.cohort_class import (
     CohortClassCreate,
     CohortClassRespond,
@@ -28,6 +33,8 @@ def create_class(cohort_id: int, payload: CohortClassCreate):
             payload.class_date,
             payload.topic,
         )
+    except (CohortNotFoundError, CohortFinishedError) as exc:
+        raise_cohort_error(exc)
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,
@@ -50,14 +57,14 @@ def create_repeating_classes(
             payload.weekdays,
             payload.topic,
         )
+    except (CohortNotFoundError, CohortFinishedError) as exc:
+        raise_cohort_error(exc)
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,
             detail="Recurring schedule failed. Check trainer assignment and cohort date constraints.",
         ) from exc
 
-    if result is None:
-        raise HTTPException(status_code=404, detail="Cohort not found")
     return result
 
 

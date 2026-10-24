@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { forkJoin } from 'rxjs';
 import { AttendanceStatus } from '../../../core/mock-data';
 import {
@@ -36,6 +37,7 @@ interface TraineeReportRow {
     MatFormFieldModule,
     MatIconModule,
     MatSelectModule,
+    MatSlideToggleModule,
   ],
   selector: 'app-cohort-report',
   styleUrl: './cohort-report.css',
@@ -53,6 +55,7 @@ export class CohortReport {
   protected readonly loadError = signal<string | null>(null);
   protected readonly classSummary = signal<ClassAttendanceSummary | null>(null);
   protected readonly historyStatuses = signal(new Map<number, AttendanceStatus>());
+  protected includeFinished = false;
   protected cohortId: number | null = null;
   protected selectedTraineeId: number | null = null;
   protected selectedClassId: number | null = null;
@@ -195,17 +198,25 @@ export class CohortReport {
     this.loadClassSummary();
   }
 
+  protected onIncludeFinishedChange(includeFinished: boolean): void {
+    this.includeFinished = includeFinished;
+    this.loadCohorts();
+  }
+
   protected statusText(status: AttendanceStatus | null): string {
     return status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Not marked';
   }
 
   private loadCohorts(): void {
     this.loading.set(true);
-    this.reportApi.getCohorts().subscribe({
+    this.loadError.set(null);
+    this.reportApi.getCohorts(this.includeFinished).subscribe({
       next: (cohorts) => {
         this.cohorts.set(cohorts);
         this.loading.set(false);
-        this.cohortId = cohorts[0]?.id ?? null;
+        if (!cohorts.some((cohort) => cohort.id === this.cohortId)) {
+          this.cohortId = cohorts[0]?.id ?? null;
+        }
         this.onCohortChange();
       },
       error: (error: unknown) => {

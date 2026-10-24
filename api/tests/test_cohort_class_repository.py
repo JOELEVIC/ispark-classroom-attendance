@@ -31,6 +31,8 @@ class FakeCursor:
             )
 
     def fetchone(self):
+        if "SELECT is_finished" in self.query:
+            return {"is_finished": False}
         if "FROM cohorts" in self.query:
             return {
                 "start_date": date(2026, 1, 5),

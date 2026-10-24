@@ -21,6 +21,8 @@ class FakeCursor:
         self.parameters = parameters
 
     def fetchone(self):
+        if "SELECT is_finished" in self.query:
+            return {"is_finished": False}
         return {"id": 1, "name": "Cohort A"}
 
     def fetchall(self):
@@ -55,7 +57,7 @@ class FakeConnection:
             cohort_repository.get_cohorts_by_program,
             (2,),
             "WHERE program_id = %s",
-            (2,),
+            (2, False),
         ),
         (
             cohort_repository.assign_trainer,
@@ -95,3 +97,28 @@ def test_cohort_repository_uses_cohort_queries(
         else {"id": 1, "name": "Cohort A"}
     )
     assert result == expected_result
+
+
+def test_lock_active_cohort_rejects_finished_cohorts():
+    class FinishedCursor:
+        def execute(self, query, parameters):
+            assert "FOR UPDATE" in query
+            assert parameters == (10,)
+
+        def fetchone(self):
+            return {"is_finished": True}
+
+    with pytest.raises(cohort_repository.CohortFinishedError):
+        cohort_repository.lock_active_cohort(FinishedCursor(), 10)
+
+
+def test_lock_active_cohort_rejects_missing_cohorts():
+    class MissingCursor:
+        def execute(self, query, parameters):
+            assert "FOR UPDATE" in query
+
+        def fetchone(self):
+            return None
+
+    with pytest.raises(cohort_repository.CohortNotFoundError):
+        cohort_repository.lock_active_cohort(MissingCursor(), 10)

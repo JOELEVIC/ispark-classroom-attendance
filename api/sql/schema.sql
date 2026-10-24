@@ -17,10 +17,14 @@ CREATE TABLE IF NOT EXISTS cohorts (
     name VARCHAR(150) NOT NULL CHECK (char_length(trim(name)) BETWEEN 2 AND 150),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
+    is_finished BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT cohorts_end_date_constraint CHECK (end_date > start_date),
     CONSTRAINT cohorts_unique_name_per_program UNIQUE (program_id, name),
     CONSTRAINT cohorts_id_program_id_unique UNIQUE (id, program_id)
 );
+
+ALTER TABLE cohorts
+    ADD COLUMN IF NOT EXISTS is_finished BOOLEAN NOT NULL DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS trainers (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

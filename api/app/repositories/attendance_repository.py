@@ -1,4 +1,5 @@
 from app.db.connection import get_db_connection
+from app.repositories.cohort_repository import lock_active_cohort
 
 
 def record_attendance(
@@ -38,6 +39,7 @@ def record_attendance(
 
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            lock_active_cohort(cur, cohort_id)
             cur.execute(
                 query,
                 (

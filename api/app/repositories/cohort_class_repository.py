@@ -1,6 +1,10 @@
 from datetime import date, timedelta
 
 from app.db.connection import get_db_connection
+from app.repositories.cohort_repository import (
+    CohortNotFoundError,
+    lock_active_cohort,
+)
 
 
 def create_class(
@@ -18,6 +22,7 @@ def create_class(
     """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            lock_active_cohort(cur, cohort_id)
             cur.execute(
                 query, (cohort_id, trainer_id, class_date, topic)
             )
@@ -32,18 +37,18 @@ def create_repeating_classes(
 ):
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+            lock_active_cohort(cur, cohort_id)
             cur.execute(
                 """
                 SELECT start_date, end_date
                 FROM cohorts
                 WHERE id = %s
-                FOR UPDATE
                 """,
                 (cohort_id,),
             )
             cohort = cur.fetchone()
             if cohort is None:
-                return None
+                raise CohortNotFoundError
 
             cur.execute(
                 "SELECT class_date FROM cohort_classes WHERE cohort_id = %s",

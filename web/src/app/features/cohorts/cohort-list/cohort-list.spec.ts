@@ -15,6 +15,7 @@ describe('CohortList', () => {
     assignTrainer: ReturnType<typeof vi.fn>;
     enrollTrainee: ReturnType<typeof vi.fn>;
     importCsv: ReturnType<typeof vi.fn>;
+    finish: ReturnType<typeof vi.fn>;
   };
 
   const cohorts: CohortRecord[] = [
@@ -25,6 +26,7 @@ describe('CohortList', () => {
       name: 'Cohort A',
       startDate: '2026-01-01',
       endDate: '2026-06-30',
+      isFinished: false,
       trainers: [{ id: 1, name: 'Ada Trainer' }],
       trainees: [
         { id: 1, name: 'Sam Trainee' },
@@ -63,6 +65,7 @@ describe('CohortList', () => {
       ),
       assignTrainer: vi.fn().mockReturnValue(of({})),
       enrollTrainee: vi.fn().mockReturnValue(of({})),
+      finish: vi.fn().mockReturnValue(of({ ...cohorts[0], isFinished: true })),
       importCsv: vi.fn().mockReturnValue(
         of({
           imported_count: 1,
@@ -100,6 +103,38 @@ describe('CohortList', () => {
     expect(text).toContain('3 Classes');
     expect(text).toContain('Ada Trainer');
     expect(text).toContain('Sam Trainee');
+  });
+
+  it('confirms finishing a cohort and renders it read-only', async () => {
+    api.listDirectory.mockReturnValue(
+      of({
+        programs: [{ id: 1, name: 'Web Development' }],
+        trainers: [{ id: 1, name: 'Ada Trainer' }],
+        trainees: [{ id: 1, name: 'Sam Trainee' }],
+        cohorts: [{ ...cohorts[0], isFinished: true }],
+      }),
+    );
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    buttons.find((button) => button.textContent?.includes('Mark as finished'))?.click();
+    fixture.detectChanges();
+
+    const confirmButton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((button) => button.textContent?.includes('Confirm finish'));
+    confirmButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.finish).toHaveBeenCalledWith(10);
+    expect(api.listDirectory).toHaveBeenLastCalledWith(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Finished · this cohort is read-only',
+    );
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        'button[aria-label="Enroll selected trainee"]',
+      ),
+    ).toBeNull();
   });
 
   it('links the selected cohort to its enrollment page', () => {

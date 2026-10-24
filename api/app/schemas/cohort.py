@@ -21,3 +21,4 @@ class CohortRespond(BaseModel):
     name: str
     start_date: date
     end_date: date
+    is_finished: bool

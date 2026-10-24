@@ -104,14 +104,17 @@ export class ReportApiService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = environment.apiBaseUrl;
 
-  getCohorts(): Observable<ReportCohort[]> {
+  getCohorts(includeFinished = false): Observable<ReportCohort[]> {
     return this.http.get<ApiProgram[]>(`${this.apiBaseUrl}/programs/`).pipe(
       switchMap((programs) =>
         programs.length
           ? forkJoin(
               programs.map((program) =>
                 this.http
-                  .get<ApiCohort[]>(`${this.apiBaseUrl}/cohorts/by-program/${program.id}`)
+                  .get<ApiCohort[]>(
+                    `${this.apiBaseUrl}/cohorts/by-program/${program.id}`,
+                    includeFinished ? { params: { include_finished: true } } : {},
+                  )
                   .pipe(
                     map((cohorts) =>
                       cohorts.map((cohort) => ({

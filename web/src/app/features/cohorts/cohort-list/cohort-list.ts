@@ -49,6 +49,8 @@ export class CohortList {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly submitting = signal(false);
+  protected readonly finishing = signal(false);
+  protected readonly confirmingFinishId = signal<number | null>(null);
   protected readonly importingCsv = signal(false);
   protected readonly csvImportResult = signal<EnrollmentImportResult | null>(null);
   protected programFilterId: number | null = null;
@@ -57,6 +59,7 @@ export class CohortList {
   protected selectedTrainerId: number | null = null;
   protected selectedTraineeId: number | null = null;
   protected showCreateForm = false;
+  protected showFinished = false;
   protected cohortName = '';
   protected startDate = '';
   protected endDate = '';
@@ -97,7 +100,7 @@ export class CohortList {
   protected loadDirectory(): void {
     this.loading.set(true);
     this.loadError.set(null);
-    this.cohortApi.listDirectory().subscribe({
+    this.cohortApi.listDirectory(this.showFinished).subscribe({
       next: ({ programs, trainers, trainees, cohorts }) => {
         this.programs.set(programs);
         this.trainers.set(trainers);
@@ -143,6 +146,44 @@ export class CohortList {
     }
     this.errorMessage = '';
     this.clearCsvImport();
+  }
+
+  protected toggleFinished(): void {
+    this.showFinished = !this.showFinished;
+    this.confirmingFinishId.set(null);
+    this.loadDirectory();
+  }
+
+  protected requestFinish(cohortId: number): void {
+    this.confirmingFinishId.set(cohortId);
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  protected cancelFinish(): void {
+    this.confirmingFinishId.set(null);
+  }
+
+  protected finishCohort(cohort: CohortRecord): void {
+    if (this.confirmingFinishId() !== cohort.id) {
+      return;
+    }
+    this.finishing.set(true);
+    this.errorMessage = '';
+    this.cohortApi.finish(cohort.id).subscribe({
+      next: () => {
+        this.showFinished = true;
+        this.confirmingFinishId.set(null);
+        this.successMessage = `${cohort.name} is now finished and read-only.`;
+        this.finishing.set(false);
+        this.loadDirectory();
+      },
+      error: (error: unknown) => {
+        console.error('Failed to finish cohort', error);
+        this.errorMessage = "Couldn't finish cohort. Please try again.";
+        this.finishing.set(false);
+      },
+    });
   }
 
   protected onCsvSelected(event: Event): void {

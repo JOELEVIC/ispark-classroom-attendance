@@ -60,6 +60,9 @@
       }
     </mat-select>
   </mat-form-field>
+  <button mat-stroked-button type="button" class="finished-toggle" (click)="toggleFinished()">
+    {{ showFinished ? 'Hide finished cohorts' : 'Show finished cohorts' }}
+  </button>
 
   @if (loading()) {
     <div class="empty-state" role="status">Loading cohorts...</div>
@@ -91,7 +94,15 @@
           </button>
         } @empty {
           <p class="empty-state">
-            {{ programFilterId === null ? 'No cohorts yet.' : 'No cohorts in this program yet.' }}
+            @if (showFinished) {
+              {{ programFilterId === null ? 'No cohorts yet.' : 'No cohorts in this program yet.' }}
+            } @else {
+              {{
+                programFilterId === null
+                  ? 'No active cohorts. Show finished cohorts to view archived cohorts.'
+                  : 'No active cohorts in this program.'
+              }}
+            }
           </p>
         }
       </div>
@@ -104,6 +115,46 @@
             {{ cohort.startDate | date: 'MMM d, y' }} –
             {{ cohort.endDate | date: 'MMM d, y' }}
           </p>
+          @if (cohort.isFinished) {
+            <p class="finished-notice" role="status">
+              <mat-icon fontSet="material-symbols-outlined">lock</mat-icon>
+              Finished · this cohort is read-only
+            </p>
+          } @else if (confirmingFinishId() === cohort.id) {
+            <div class="finish-confirmation" role="group" aria-label="Confirm finish cohort">
+              <span
+                >Finish this cohort? Its existing records will be kept, but no more changes can be
+                made.</span
+              >
+              <button
+                mat-flat-button
+                type="button"
+                class="finish-button"
+                [disabled]="finishing()"
+                (click)="finishCohort(cohort)"
+              >
+                {{ finishing() ? 'Finishing...' : 'Confirm finish' }}
+              </button>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="finishing()"
+                (click)="cancelFinish()"
+              >
+                Cancel
+              </button>
+            </div>
+          } @else {
+            <button
+              mat-stroked-button
+              type="button"
+              class="finish-button"
+              (click)="requestFinish(cohort.id)"
+            >
+              <mat-icon fontSet="material-symbols-outlined">lock</mat-icon>
+              Mark as finished
+            </button>
+          }
 
           <div class="detail-stats">
             <span
@@ -123,15 +174,17 @@
 
           <div class="section-heading">
             <h3>Enrolled trainees</h3>
-            <a
-              mat-stroked-button
-              class="enrollment-page-link"
-              [routerLink]="['/enrollments']"
-              [queryParams]="{ cohortId: cohort.id }"
-            >
-              <mat-icon fontSet="material-symbols-outlined">open_in_new</mat-icon>
-              Enrollment page
-            </a>
+            @if (!cohort.isFinished) {
+              <a
+                mat-stroked-button
+                class="enrollment-page-link"
+                [routerLink]="['/enrollments']"
+                [queryParams]="{ cohortId: cohort.id }"
+              >
+                <mat-icon fontSet="material-symbols-outlined">open_in_new</mat-icon>
+                Enrollment page
+              </a>
+            }
           </div>
           @for (trainee of cohort.trainees; track trainee.id) {
             <div class="person-row">
@@ -142,9 +195,9 @@
             <p class="muted">No trainees enrolled yet.</p>
           }
 
-          @if (trainees().length === 0) {
+          @if (!cohort.isFinished && trainees().length === 0) {
             <p class="muted">Create a trainee before enrolling one.</p>
-          } @else if (availableTrainees.length) {
+          } @else if (!cohort.isFinished && availableTrainees.length) {
             <div class="assign-row">
               <mat-form-field appearance="outline">
                 <mat-label>Enroll a trainee</mat-label>
@@ -165,92 +218,94 @@
                 Enroll trainee
               </button>
             </div>
-          } @else {
+          } @else if (!cohort.isFinished) {
             <p class="muted">All trainees are already enrolled.</p>
           }
 
-          <section class="csv-enrollment" aria-labelledby="csv-enrollment-heading">
-            <h3 id="csv-enrollment-heading">Enroll trainees from CSV</h3>
-            <p class="muted">Choose a CSV with one column headed <code>name</code>.</p>
-            <label class="csv-file-label" [attr.for]="'cohort-csv-' + cohort.id">
-              Select CSV file
-            </label>
-            <input
-              [id]="'cohort-csv-' + cohort.id"
-              type="file"
-              accept=".csv,text/csv"
-              (change)="onCsvSelected($event)"
-            />
-            @if (selectedCsv) {
-              <p class="csv-selected-file">{{ selectedCsv.name }}</p>
-            }
-            <button
-              mat-stroked-button
-              type="button"
-              class="csv-import-button"
-              [disabled]="!selectedCsv || importingCsv()"
-              (click)="importCsv()"
-            >
-              <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
-              {{ importingCsv() ? 'Importing...' : 'Import CSV' }}
-            </button>
-            @if (csvImportError) {
-              <p class="error-message" role="alert">{{ csvImportError }}</p>
-            }
-            @if (csvImportResult(); as result) {
-              <div class="csv-import-result" role="status">
-                <p>
-                  Enrolled {{ result.imported_count }} of {{ result.total_rows }}
-                  CSV rows.
-                </p>
-                @if (result.failures.length) {
-                  <h4>Rows not imported</h4>
-                  <ul>
-                    @for (failure of result.failures; track failure.row) {
-                      <li>
-                        <strong>Row {{ failure.row }}</strong>
-                        <span>{{ failure.name || 'Blank name' }}</span>
-                        <span>{{ failure.reason }}</span>
-                      </li>
-                    }
-                  </ul>
-                }
-              </div>
-            }
-          </section>
+          @if (!cohort.isFinished) {
+            <section class="csv-enrollment" aria-labelledby="csv-enrollment-heading">
+              <h3 id="csv-enrollment-heading">Enroll trainees from CSV</h3>
+              <p class="muted">Choose a CSV with one column headed <code>name</code>.</p>
+              <label class="csv-file-label" [attr.for]="'cohort-csv-' + cohort.id">
+                Select CSV file
+              </label>
+              <input
+                [id]="'cohort-csv-' + cohort.id"
+                type="file"
+                accept=".csv,text/csv"
+                (change)="onCsvSelected($event)"
+              />
+              @if (selectedCsv) {
+                <p class="csv-selected-file">{{ selectedCsv.name }}</p>
+              }
+              <button
+                mat-stroked-button
+                type="button"
+                class="csv-import-button"
+                [disabled]="!selectedCsv || importingCsv()"
+                (click)="importCsv()"
+              >
+                <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
+                {{ importingCsv() ? 'Importing...' : 'Import CSV' }}
+              </button>
+              @if (csvImportError) {
+                <p class="error-message" role="alert">{{ csvImportError }}</p>
+              }
+              @if (csvImportResult(); as result) {
+                <div class="csv-import-result" role="status">
+                  <p>
+                    Enrolled {{ result.imported_count }} of {{ result.total_rows }}
+                    CSV rows.
+                  </p>
+                  @if (result.failures.length) {
+                    <h4>Rows not imported</h4>
+                    <ul>
+                      @for (failure of result.failures; track failure.row) {
+                        <li>
+                          <strong>Row {{ failure.row }}</strong>
+                          <span>{{ failure.name || 'Blank name' }}</span>
+                          <span>{{ failure.reason }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              }
+            </section>
 
-          <div class="section-heading">
-            <h3>Assigned trainers</h3>
-          </div>
-          @for (trainer of cohort.trainers; track trainer.id) {
-            <div class="person-row">
-              <span class="avatar">{{ trainer.name.slice(0, 1) }}</span>
-              <span>{{ trainer.name }}</span>
+            <div class="section-heading">
+              <h3>Assigned trainers</h3>
             </div>
-          } @empty {
-            <p class="muted">No trainers assigned yet.</p>
-          }
+            @for (trainer of cohort.trainers; track trainer.id) {
+              <div class="person-row">
+                <span class="avatar">{{ trainer.name.slice(0, 1) }}</span>
+                <span>{{ trainer.name }}</span>
+              </div>
+            } @empty {
+              <p class="muted">No trainers assigned yet.</p>
+            }
 
-          <div class="assign-row">
-            <mat-form-field appearance="outline">
-              <mat-label>Assign a trainer</mat-label>
-              <mat-select [(ngModel)]="selectedTrainerId">
-                @for (trainer of availableTrainers; track trainer.id) {
-                  <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <button
-              mat-flat-button
-              class="assign-button"
-              aria-label="Assign selected trainer"
-              [disabled]="selectedTrainerId === null || submitting()"
-              (click)="assignTrainer()"
-            >
-              <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
-              Assign trainer
-            </button>
-          </div>
+            <div class="assign-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Assign a trainer</mat-label>
+                <mat-select [(ngModel)]="selectedTrainerId">
+                  @for (trainer of availableTrainers; track trainer.id) {
+                    <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button
+                mat-flat-button
+                class="assign-button"
+                aria-label="Assign selected trainer"
+                [disabled]="selectedTrainerId === null || submitting()"
+                (click)="assignTrainer()"
+              >
+                <mat-icon fontSet="material-symbols-outlined">person_add</mat-icon>
+                Assign trainer
+              </button>
+            </div>
+          }
         </mat-card>
       }
     </div>

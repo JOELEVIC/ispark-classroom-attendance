@@ -17,6 +17,8 @@ class FakeCursor:
         self.parameters = parameters
 
     def fetchone(self):
+        if "SELECT is_finished" in self.query:
+            return {"is_finished": False}
         if self.query.startswith("SELECT 1 FROM cohorts"):
             return {"exists": 1}
         if "INSERT INTO enrollments" in self.query:

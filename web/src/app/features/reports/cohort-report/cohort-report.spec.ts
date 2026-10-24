@@ -17,7 +17,14 @@ describe('CohortReport', () => {
     api = {
       getCohorts: vi
         .fn()
-        .mockReturnValue(of([{ id: 10, name: 'Cohort A', programName: 'Web Development' }])),
+        .mockImplementation((includeFinished = false) =>
+          of([
+            { id: 10, name: 'Cohort A', programName: 'Web Development' },
+            ...(includeFinished
+              ? [{ id: 11, name: 'Cohort B', programName: 'Web Development' }]
+              : []),
+          ]),
+        ),
       getCohortReport: vi.fn().mockReturnValue(
         of([
           {
@@ -67,5 +74,18 @@ describe('CohortReport', () => {
 
     expect(api.getTraineeHistory).toHaveBeenCalledWith(20, 10);
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Present');
+  });
+
+  it('reloads cohort choices when finished cohorts are toggled', async () => {
+    const toggle = (fixture.nativeElement as HTMLElement).querySelector(
+      'button[role="switch"]',
+    ) as HTMLButtonElement;
+    toggle.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.getCohorts).toHaveBeenLastCalledWith(true);
+    expect(api.getCohortReport).toHaveBeenLastCalledWith(10);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cohort A');
   });
 });

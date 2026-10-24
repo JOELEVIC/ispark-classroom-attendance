@@ -4,16 +4,26 @@
       <p class="eyebrow">INSIGHTS</p>
       <h1>Cohort Report</h1>
     </div>
-    <mat-form-field class="cohort-select" appearance="outline">
-      <mat-label>Cohort</mat-label>
-      <mat-select [(ngModel)]="cohortId" (selectionChange)="onCohortChange()">
-        @for (cohort of cohorts(); track cohort.id) {
-          <mat-option [value]="cohort.id">
-            {{ cohort.programName }} · {{ cohort.name }}
-          </mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+    <div class="cohort-controls">
+      <mat-slide-toggle
+        class="cohort-toggle"
+        [ngModel]="includeFinished"
+        (ngModelChange)="onIncludeFinishedChange($event)"
+        aria-label="Include finished cohorts"
+      >
+        Include finished cohorts
+      </mat-slide-toggle>
+      <mat-form-field class="cohort-select" appearance="outline">
+        <mat-label>Cohort</mat-label>
+        <mat-select [(ngModel)]="cohortId" (selectionChange)="onCohortChange()">
+          @for (cohort of cohorts(); track cohort.id) {
+            <mat-option [value]="cohort.id">
+              {{ cohort.programName }} · {{ cohort.name }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
   </header>
 
   @if (loadError()) {

@@ -1,8 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { CohortApiService } from './cohort-api.service';
 
@@ -12,11 +9,7 @@ describe('CohortApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        CohortApiService,
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), CohortApiService],
     });
     service = TestBed.inject(CohortApiService);
     httpTesting = TestBed.inject(HttpTestingController);
@@ -28,12 +21,8 @@ describe('CohortApiService', () => {
     let result: unknown;
     service.listDirectory().subscribe((directory) => (result = directory));
 
-    httpTesting.expectOne('/api/programs/').flush([
-      { id: 1, name: 'Web Development' },
-    ]);
-    httpTesting.expectOne('/api/trainers/').flush([
-      { id: 5, name: 'Ada Trainer' },
-    ]);
+    httpTesting.expectOne('/api/programs/').flush([{ id: 1, name: 'Web Development' }]);
+    httpTesting.expectOne('/api/trainers/').flush([{ id: 5, name: 'Ada Trainer' }]);
     httpTesting.expectOne('/api/trainees/').flush([
       { id: 20, name: 'Sam Trainee' },
       { id: 21, name: 'Rae Trainee' },
@@ -45,20 +34,15 @@ describe('CohortApiService', () => {
         name: 'Cohort A',
         start_date: '2026-01-01',
         end_date: '2026-06-30',
+        is_finished: false,
       },
     ]);
-    httpTesting
-      .expectOne('/api/cohorts/10/trainers')
-      .flush([{ id: 5, name: 'Ada Trainer' }]);
-    httpTesting
-      .expectOne('/api/cohorts/10/enrollments')
-      .flush([
-        { id: 20, trainee_id: 20, trainee_name: 'Sam Trainee' },
-        { id: 21, trainee_id: 21, trainee_name: 'Rae Trainee' },
-      ]);
-    httpTesting
-      .expectOne('/api/cohorts/10/classes')
-      .flush([{ id: 30 }, { id: 31 }, { id: 32 }]);
+    httpTesting.expectOne('/api/cohorts/10/trainers').flush([{ id: 5, name: 'Ada Trainer' }]);
+    httpTesting.expectOne('/api/cohorts/10/enrollments').flush([
+      { id: 20, trainee_id: 20, trainee_name: 'Sam Trainee' },
+      { id: 21, trainee_id: 21, trainee_name: 'Rae Trainee' },
+    ]);
+    httpTesting.expectOne('/api/cohorts/10/classes').flush([{ id: 30 }, { id: 31 }, { id: 32 }]);
 
     expect(result).toEqual({
       programs: [{ id: 1, name: 'Web Development' }],
@@ -75,6 +59,7 @@ describe('CohortApiService', () => {
           name: 'Cohort A',
           startDate: '2026-01-01',
           endDate: '2026-06-30',
+          isFinished: false,
           trainers: [{ id: 5, name: 'Ada Trainer' }],
           trainees: [
             { id: 20, name: 'Sam Trainee' },
@@ -84,6 +69,20 @@ describe('CohortApiService', () => {
         },
       ],
     });
+  });
+
+  it('requests finished cohorts only when explicitly included', () => {
+    service.listDirectory(true).subscribe();
+    httpTesting.expectOne('/api/programs/').flush([{ id: 1, name: 'Web Development' }]);
+    httpTesting.expectOne('/api/trainers/').flush([]);
+    httpTesting.expectOne('/api/trainees/').flush([]);
+    httpTesting
+      .expectOne(
+        (request) =>
+          request.url === '/api/cohorts/by-program/1' &&
+          request.params.get('include_finished') === 'true',
+      )
+      .flush([]);
   });
 
   it('creates cohorts with the API field names', () => {
@@ -111,6 +110,7 @@ describe('CohortApiService', () => {
       name: 'Cohort B',
       start_date: '2026-07-01',
       end_date: '2026-12-31',
+      is_finished: false,
     });
     expect(result).toEqual({
       id: 11,
@@ -119,9 +119,34 @@ describe('CohortApiService', () => {
       name: 'Cohort B',
       startDate: '2026-07-01',
       endDate: '2026-12-31',
+      isFinished: false,
       trainers: [],
       trainees: [],
       classCount: 0,
+    });
+  });
+
+  it('finishes a cohort without deleting its records', () => {
+    let result: unknown;
+    service.finish(10).subscribe((cohort) => (result = cohort));
+
+    const request = httpTesting.expectOne('/api/cohorts/10/finish');
+    expect(request.request.method).toBe('POST');
+    request.flush({
+      id: 10,
+      program_id: 1,
+      name: 'Cohort A',
+      start_date: '2026-01-01',
+      end_date: '2026-06-30',
+      is_finished: true,
+    });
+    expect(result).toEqual({
+      id: 10,
+      program_id: 1,
+      name: 'Cohort A',
+      start_date: '2026-01-01',
+      end_date: '2026-06-30',
+      is_finished: true,
     });
   });
 
