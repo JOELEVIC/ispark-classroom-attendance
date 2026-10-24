@@ -118,6 +118,31 @@ so approved absences do not lower the rate. No countable records gives N/A.
 Rates below 75% are flagged. Only saved attendance records count; unmarked
 trainees are shown separately in the class summary.
 
+## Progress
+
+Required workflows and stretch goals are implemented. Their key rules and
+assumptions are summarized below.
+
+## Feature rules and assumptions
+
+- **Attendance history:** only actual status changes create history entries;
+  each entry records the old/new status, trainer, and time.
+- **Report export:** CSV contains one row per trainee with status totals and
+  attendance rate; trainees without countable records have an `N/A` rate.
+- **CSV enrollment:** names are trimmed and matched exactly. A new name creates
+  a trainee; already-enrolled names and ambiguous matches are reported. Each
+  valid row commits independently, so one failure does not undo other rows.
+- **Recurring classes:** selected weekdays use one topic and trainer across the
+  cohort's inclusive date range. Existing class dates are skipped; holidays
+  are not inferred.
+- **Finished cohorts:** finishing hides a cohort from default lists and blocks
+  edits without deleting its records.
+- **Trainee search:** searches the full directory across cohorts and returns
+  ten results per page by default.
+- **Docker Compose:** the root `.env` configures the database. Schema and seed
+  scripts run when the database volume is first created; the volume preserves
+  data when containers stop.
+
 ## Assumptions and scope
 
 - A trainee is one global person and can enroll in multiple cohorts. Names are
@@ -131,10 +156,11 @@ trainees are shown separately in the class summary.
   are currently written individually; the batch is not all-or-nothing if a
   later record fails.
 
-## Progress and next steps
+## Next steps
 
-Required workflows and six stretch goals are implemented: change history,
-report CSV export, CSV enrollment import, recurring classes, finished cohorts,
-and paginated cross-cohort trainee search. **Docker Compose is the remaining
-stretch goal.** Further work would make batch attendance writes atomic and add
-tests for concurrent writes and seed-script rerun safety.
+If there were more time, next steps would be:
+
+- Upgrade trainer search from UI-only filtering to API-backed search with
+  pagination.
+- Add a global search button that opens a modal for searching across the app.
+- Add class material creation.
