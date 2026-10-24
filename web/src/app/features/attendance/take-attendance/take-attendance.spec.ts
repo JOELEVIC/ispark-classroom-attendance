@@ -23,7 +23,10 @@ describe('TakeAttendance', () => {
         { id: 1, name: 'Ada Trainee' },
         { id: 2, name: 'Ben Trainee' },
       ],
-      trainers: [{ id: 7, name: 'Amina Trainer' }],
+      trainers: [
+        { id: 7, name: 'Amina Trainer' },
+        { id: 8, name: 'Other Trainer' },
+      ],
       classes: [
         {
           id: 30,
@@ -79,6 +82,20 @@ describe('TakeAttendance', () => {
       '.roster-row button.present',
     ) as HTMLButtonElement;
     expect(presentButton.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('shows only the trainer assigned to the selected class', async () => {
+    const trainerSelect = (
+      fixture.nativeElement as HTMLElement
+    ).querySelectorAll('mat-select')[2] as HTMLElement;
+    trainerSelect.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const options = document.querySelectorAll('mat-option');
+    expect(options).toHaveLength(1);
+    expect(options[0].textContent).toContain('Amina Trainer');
+    expect(options[0].textContent).not.toContain('Other Trainer');
   });
 
   it('saves updated attendance for the selected class', async () => {

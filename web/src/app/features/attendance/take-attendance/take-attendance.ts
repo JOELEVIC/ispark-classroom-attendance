@@ -87,6 +87,16 @@ export class TakeAttendance implements OnInit {
     return this.selectedCohort?.trainers ?? [];
   }
 
+  protected get assignedTrainer(): AttendanceTrainer | undefined {
+    const trainerId = this.selectedClass?.trainerId;
+    return this.trainers.find((trainer) => trainer.id === trainerId);
+  }
+
+  protected get recordingTrainers(): AttendanceTrainer[] {
+    const trainer = this.assignedTrainer;
+    return trainer ? [trainer] : [];
+  }
+
   protected get selectedClass(): AttendanceClass | undefined {
     return this.classes.find((item) => item.id === this.classId);
   }
@@ -128,7 +138,7 @@ export class TakeAttendance implements OnInit {
   protected selectClass(classId: number | null): void {
     this.classId = classId;
     const selectedClass = this.selectedClass;
-    this.trainerId = selectedClass?.trainerId ?? this.trainers[0]?.id ?? null;
+    this.trainerId = selectedClass?.trainerId ?? null;
     this.saved = false;
     this.errorMessage = '';
     this.attendanceDraft = Object.fromEntries(

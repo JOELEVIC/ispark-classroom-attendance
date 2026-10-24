@@ -52,9 +52,12 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Recording trainer</mat-label>
-          <mat-select [(ngModel)]="trainerId" [disabled]="!trainers.length">
-            @for (trainer of trainers; track trainer.id) {
+          <mat-label>Assigned trainer</mat-label>
+          <mat-select
+            [ngModel]="trainerId"
+            [disabled]="!recordingTrainers.length"
+          >
+            @for (trainer of recordingTrainers; track trainer.id) {
               <mat-option [value]="trainer.id">{{ trainer.name }}</mat-option>
             }
           </mat-select>
