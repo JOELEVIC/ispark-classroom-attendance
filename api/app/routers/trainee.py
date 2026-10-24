@@ -1,7 +1,11 @@
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from app.repositories import trainee_repository
-from app.schemas.trainee import TraineeCreate, TraineeRespond
+from app.schemas.trainee import (
+    TraineeCreate,
+    TraineePageRespond,
+    TraineeRespond,
+)
 
 router = APIRouter(prefix="/trainees", tags=["Trainees"])
 
@@ -18,6 +22,15 @@ def create_trainee(payload: TraineeCreate):
 @router.get("/", response_model=list[TraineeRespond])
 def list_trainees():
     return trainee_repository.get_trainees()
+
+
+@router.get("/search", response_model=TraineePageRespond)
+def search_trainees(
+    q: str = Query(default="", max_length=150),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+):
+    return trainee_repository.search_trainees(q.strip(), page, page_size)
 
 
 @router.get("/{trainee_id}", response_model=TraineeRespond)

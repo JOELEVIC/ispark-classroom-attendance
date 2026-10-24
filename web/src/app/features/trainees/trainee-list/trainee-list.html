@@ -50,7 +50,13 @@
 
   <mat-form-field class="search-field" appearance="outline">
     <mat-icon matPrefix fontSet="material-symbols-outlined">search</mat-icon>
-    <input matInput [(ngModel)]="searchTerm" placeholder="Search trainees..." />
+    <input
+      matInput
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearchChange($event)"
+      placeholder="Search trainees across cohorts..."
+      aria-label="Search trainees by name across cohorts"
+    />
   </mat-form-field>
 
   @if (loading()) {
@@ -58,17 +64,21 @@
   } @else if (loadError()) {
     <div class="empty-state error-message" role="alert">
       <p>{{ loadError() }}</p>
-      <button mat-stroked-button type="button" (click)="loadTrainees()">
-        Retry
-      </button>
+      <button mat-stroked-button type="button" (click)="loadTrainees()">Retry</button>
     </div>
   } @else {
+    <p class="result-count" aria-live="polite">
+      Showing {{ firstResultNumber }}–{{ lastResultNumber }} of {{ total() }} trainees
+    </p>
     <div class="trainee-list">
-      @for (trainee of filteredTrainees; track trainee.id) {
+      @for (trainee of trainees(); track trainee.id) {
         <mat-card class="trainee-card">
           <span class="trainee-avatar">{{ trainee.name.slice(0, 1) }}</span>
           <div class="trainee-copy">
             <h2>{{ trainee.name }}</h2>
+            <p>
+              {{ trainee.cohorts.length ? trainee.cohorts.join(', ') : 'Not enrolled in a cohort' }}
+            </p>
           </div>
         </mat-card>
       } @empty {
@@ -77,5 +87,24 @@
         </div>
       }
     </div>
+    <nav class="pagination" aria-label="Trainee result pages">
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="currentPage() <= 1 || loading()"
+        (click)="changePage(currentPage() - 1)"
+      >
+        Previous
+      </button>
+      <span>Page {{ currentPage() }} of {{ totalPages() || 1 }}</span>
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="currentPage() >= totalPages() || loading()"
+        (click)="changePage(currentPage() + 1)"
+      >
+        Next
+      </button>
+    </nav>
   }
 </section>

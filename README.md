@@ -144,6 +144,14 @@ names, unknown or ambiguous names, blank names, and malformed rows are reported
 with their CSV row number and reason. Uploads are limited to 1 MB and must use
 UTF-8.
 
+## Trainee search and pagination
+
+The Trainees page searches names across the full trainee directory and shows
+each trainee's cohort memberships. Results are loaded from the API ten at a
+time, with a total count and Previous/Next page controls. The existing
+`GET /trainees/` directory endpoint remains available to enrollment workflows;
+the paginated search uses `GET /trainees/search?q=<name>&page=1&page_size=10`.
+
 ## Recurring class schedules
 
 On the Classes page, choose **Repeating schedule**, enter a shared topic and

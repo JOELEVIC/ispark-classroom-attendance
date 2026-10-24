@@ -75,6 +75,12 @@
   color: #74869e;
 }
 
+.result-count {
+  margin: 0 0 10px;
+  color: #71839a;
+  font-size: 13px;
+}
+
 .trainee-list {
   overflow: hidden;
   border: 1px solid #e4ebf4;
@@ -123,6 +129,25 @@
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.trainee-copy p {
+  overflow: hidden;
+  margin: 4px 0 0;
+  color: #71839a;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 0;
+  color: #52657d;
+  font-size: 13px;
 }
 
 .empty-state {
