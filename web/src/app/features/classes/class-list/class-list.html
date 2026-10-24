@@ -22,9 +22,7 @@
   } @else if (loadError()) {
     <div class="empty-state error-message" role="alert">
       <p>{{ loadError() }}</p>
-      <button mat-stroked-button type="button" (click)="loadDirectory()">
-        Retry
-      </button>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">Retry</button>
     </div>
   } @else if (!cohorts().length) {
     <div class="empty-state">
@@ -34,10 +32,7 @@
   } @else {
     <mat-form-field class="cohort-select" appearance="outline">
       <mat-label>Cohort</mat-label>
-      <mat-select
-        [(ngModel)]="cohortId"
-        (selectionChange)="onCohortChange()"
-      >
+      <mat-select [(ngModel)]="cohortId" (selectionChange)="onCohortChange()">
         @for (cohort of cohorts(); track cohort.id) {
           <mat-option [value]="cohort.id">
             {{ cohort.programName }} · {{ cohort.name }}
@@ -48,32 +43,48 @@
 
     @if (showCreateForm) {
       <mat-card class="form-card">
-        <h2>Schedule a class</h2>
+        <h2>Schedule classes</h2>
         @if (!schedulableTrainers.length) {
-          <p class="error-message">
-            Create a trainer before scheduling a class.
-          </p>
+          <p class="error-message">Create a trainer before scheduling a class.</p>
           <a mat-button routerLink="/trainers">Go to Trainers</a>
         } @else {
+          <div class="schedule-modes" role="group" aria-label="Schedule type">
+            <button
+              mat-stroked-button
+              type="button"
+              [class.active]="scheduleMode === 'single'"
+              [attr.aria-pressed]="scheduleMode === 'single'"
+              (click)="scheduleMode = 'single'; errorMessage = ''"
+            >
+              One class
+            </button>
+            <button
+              mat-stroked-button
+              type="button"
+              [class.active]="scheduleMode === 'repeating'"
+              [attr.aria-pressed]="scheduleMode === 'repeating'"
+              (click)="scheduleMode = 'repeating'; errorMessage = ''"
+            >
+              Repeating schedule
+            </button>
+          </div>
           <div class="form-grid">
             <mat-form-field appearance="outline">
               <mat-label>Topic</mat-label>
-              <input
-                matInput
-                [(ngModel)]="classTopic"
-                placeholder="e.g. Intro to SQL"
-              />
+              <input matInput [(ngModel)]="classTopic" placeholder="e.g. Intro to SQL" />
             </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Class date</mat-label>
-              <input
-                matInput
-                type="date"
-                [(ngModel)]="classDate"
-                [min]="selectedCohort?.startDate"
-                [max]="selectedCohort?.endDate"
-              />
-            </mat-form-field>
+            @if (scheduleMode === 'single') {
+              <mat-form-field appearance="outline">
+                <mat-label>Class date</mat-label>
+                <input
+                  matInput
+                  type="date"
+                  [(ngModel)]="classDate"
+                  [min]="selectedCohort?.startDate"
+                  [max]="selectedCohort?.endDate"
+                />
+              </mat-form-field>
+            }
             <mat-form-field appearance="outline">
               <mat-label>Trainer</mat-label>
               <mat-select [(ngModel)]="trainerId">
@@ -88,11 +99,35 @@
               </mat-select>
             </mat-form-field>
           </div>
+          @if (scheduleMode === 'repeating') {
+            <fieldset class="weekday-picker">
+              <legend>Repeat on</legend>
+              <div class="weekday-options">
+                @for (day of weekdays; track day.value) {
+                  <label>
+                    <input
+                      type="checkbox"
+                      [checked]="selectedWeekdays.includes(day.value)"
+                      (change)="toggleWeekday(day.value, $event)"
+                    />
+                    {{ day.label }}
+                  </label>
+                }
+              </div>
+            </fieldset>
+          }
           @if (selectedCohort; as cohort) {
             <p class="form-hint">
-              Class date must be between
-              {{ cohort.startDate | date: 'MMM d, y' }} and
-              {{ cohort.endDate | date: 'MMM d, y' }}.
+              @if (scheduleMode === 'single') {
+                Class date must be between
+                {{ cohort.startDate | date: 'MMM d, y' }} and
+                {{ cohort.endDate | date: 'MMM d, y' }}.
+              } @else {
+                Classes will be scheduled on selected weekdays from
+                {{ cohort.startDate | date: 'MMM d, y' }} through
+                {{ cohort.endDate | date: 'MMM d, y' }}. Dates that already have a class will be
+                skipped.
+              }
               Trainers not yet assigned will be assigned when you save.
             </p>
           }
@@ -105,10 +140,20 @@
             [disabled]="submitting()"
             (click)="createClass()"
           >
-            {{ submitting() ? 'Saving...' : 'Save Class' }}
+            {{
+              submitting()
+                ? 'Scheduling...'
+                : scheduleMode === 'single'
+                  ? 'Save Class'
+                  : 'Schedule Repeating Classes'
+            }}
           </button>
         }
       </mat-card>
+    }
+
+    @if (scheduleMessage) {
+      <p class="schedule-message" role="status">{{ scheduleMessage }}</p>
     }
 
     @if (errorMessage && !showCreateForm) {
@@ -150,11 +195,21 @@
           </div>
           @if (selectedSummaryId === classItem.id) {
             <div class="summary-row">
-              <span class="present">Present <strong>{{ countFor(classItem, 'present') }}</strong></span>
-              <span class="absent">Absent <strong>{{ countFor(classItem, 'absent') }}</strong></span>
-              <span class="late">Late <strong>{{ countFor(classItem, 'late') }}</strong></span>
-              <span class="excused">Excused <strong>{{ countFor(classItem, 'excused') }}</strong></span>
-              <span class="unmarked">Unmarked <strong>{{ unmarkedCount(classItem) }}</strong></span>
+              <span class="present"
+                >Present <strong>{{ countFor(classItem, 'present') }}</strong></span
+              >
+              <span class="absent"
+                >Absent <strong>{{ countFor(classItem, 'absent') }}</strong></span
+              >
+              <span class="late"
+                >Late <strong>{{ countFor(classItem, 'late') }}</strong></span
+              >
+              <span class="excused"
+                >Excused <strong>{{ countFor(classItem, 'excused') }}</strong></span
+              >
+              <span class="unmarked"
+                >Unmarked <strong>{{ unmarkedCount(classItem) }}</strong></span
+              >
             </div>
           }
         </mat-card>

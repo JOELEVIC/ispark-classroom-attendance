@@ -143,3 +143,11 @@ trimmed; imports do not create trainees. Already-enrolled trainees, repeated
 names, unknown or ambiguous names, blank names, and malformed rows are reported
 with their CSV row number and reason. Uploads are limited to 1 MB and must use
 UTF-8.
+
+## Recurring class schedules
+
+On the Classes page, choose **Repeating schedule**, enter a shared topic and
+trainer, and select one or more weekdays. The API schedules a class for each
+selected weekday from the cohort start date through its end date, inclusive.
+Any date that already has a class is skipped and reported; holidays are not
+automatically excluded.

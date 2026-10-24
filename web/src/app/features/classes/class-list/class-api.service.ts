@@ -77,6 +77,19 @@ export interface ClassCreate {
   topic: string;
 }
 
+export interface RepeatingClassCreate {
+  cohortId: number;
+  trainerId: number;
+  weekdays: number[];
+  topic: string;
+}
+
+export interface RepeatingClassResult {
+  createdCount: number;
+  skippedDates: string[];
+  classes: ClassRecord[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ClassApiService {
   private readonly http = inject(HttpClient);
@@ -84,28 +97,20 @@ export class ClassApiService {
 
   getDirectory(): Observable<ClassDirectory> {
     return forkJoin({
-      programs: this.http.get<{ id: number; name: string }[]>(
-        `${this.apiBaseUrl}/programs/`,
-      ),
-      trainers: this.http.get<ClassTrainer[]>(
-        `${this.apiBaseUrl}/trainers/`,
-      ),
+      programs: this.http.get<{ id: number; name: string }[]>(`${this.apiBaseUrl}/programs/`),
+      trainers: this.http.get<ClassTrainer[]>(`${this.apiBaseUrl}/trainers/`),
     }).pipe(
       switchMap(({ programs, trainers }) =>
         programs.length
           ? forkJoin(
               programs.map((program) =>
                 this.http
-                  .get<ApiCohort[]>(
-                    `${this.apiBaseUrl}/cohorts/by-program/${program.id}`,
-                  )
+                  .get<ApiCohort[]>(`${this.apiBaseUrl}/cohorts/by-program/${program.id}`)
                   .pipe(
                     switchMap((cohorts) =>
                       cohorts.length
                         ? forkJoin(
-                            cohorts.map((cohort) =>
-                              this.getCohort(cohort, program.name, trainers),
-                            ),
+                            cohorts.map((cohort) => this.getCohort(cohort, program.name, trainers)),
                           )
                         : of([]),
                     ),
@@ -124,14 +129,11 @@ export class ClassApiService {
 
   create(payload: ClassCreate): Observable<ClassRecord> {
     return this.http
-      .post<ApiClass>(
-        `${this.apiBaseUrl}/cohorts/${payload.cohortId}/classes`,
-        {
-          trainer_id: payload.trainerId,
-          class_date: payload.date,
-          topic: payload.topic,
-        },
-      )
+      .post<ApiClass>(`${this.apiBaseUrl}/cohorts/${payload.cohortId}/classes`, {
+        trainer_id: payload.trainerId,
+        class_date: payload.date,
+        topic: payload.topic,
+      })
       .pipe(
         map((classItem) => ({
           id: classItem.id,
@@ -150,11 +152,43 @@ export class ClassApiService {
       );
   }
 
+  createRepeating(payload: RepeatingClassCreate): Observable<RepeatingClassResult> {
+    return this.http
+      .post<{
+        created_count: number;
+        skipped_dates: string[];
+        classes: ApiClass[];
+      }>(`${this.apiBaseUrl}/cohorts/${payload.cohortId}/classes/repeating`, {
+        trainer_id: payload.trainerId,
+        weekdays: payload.weekdays,
+        topic: payload.topic,
+      })
+      .pipe(
+        map((result) => ({
+          createdCount: result.created_count,
+          skippedDates: result.skipped_dates,
+          classes: result.classes.map((classItem) => ({
+            id: classItem.id,
+            cohortId: classItem.cohort_id,
+            cohortName: '',
+            programName: '',
+            cohortStartDate: '',
+            cohortEndDate: '',
+            trainerId: classItem.trainer_id,
+            trainerName: '',
+            date: classItem.class_date,
+            topic: classItem.topic,
+            attendance: [],
+            traineeCount: 0,
+          })),
+        })),
+      );
+  }
+
   assignTrainer(cohortId: number, trainerId: number): Observable<unknown> {
-    return this.http.post(
-      `${this.apiBaseUrl}/cohorts/${cohortId}/trainers`,
-      { trainer_id: trainerId },
-    );
+    return this.http.post(`${this.apiBaseUrl}/cohorts/${cohortId}/trainers`, {
+      trainer_id: trainerId,
+    });
   }
 
   private getCohort(
@@ -163,24 +197,18 @@ export class ClassApiService {
     allTrainers: ClassTrainer[],
   ): Observable<ClassCohort> {
     return forkJoin({
-      trainers: this.http.get<ClassTrainer[]>(
-        `${this.apiBaseUrl}/cohorts/${cohort.id}/trainers`,
-      ),
+      trainers: this.http.get<ClassTrainer[]>(`${this.apiBaseUrl}/cohorts/${cohort.id}/trainers`),
       enrollments: this.http.get<ApiEnrollment[]>(
         `${this.apiBaseUrl}/cohorts/${cohort.id}/enrollments`,
       ),
-      classes: this.http.get<ApiClass[]>(
-        `${this.apiBaseUrl}/cohorts/${cohort.id}/classes`,
-      ),
+      classes: this.http.get<ApiClass[]>(`${this.apiBaseUrl}/cohorts/${cohort.id}/classes`),
     }).pipe(
       switchMap(({ trainers, enrollments, classes }) =>
         classes.length
           ? forkJoin(
               classes.map((classItem) =>
                 this.http
-                  .get<ApiAttendance[]>(
-                    `${this.apiBaseUrl}/classes/${classItem.id}/attendance`,
-                  )
+                  .get<ApiAttendance[]>(`${this.apiBaseUrl}/classes/${classItem.id}/attendance`)
                   .pipe(
                     map((attendance) =>
                       this.mapClass(
@@ -196,24 +224,10 @@ export class ClassApiService {
               ),
             ).pipe(
               map((classRecords) =>
-                this.mapCohort(
-                  cohort,
-                  programName,
-                  trainers,
-                  enrollments.length,
-                  classRecords,
-                ),
+                this.mapCohort(cohort, programName, trainers, enrollments.length, classRecords),
               ),
             )
-          : of(
-              this.mapCohort(
-                cohort,
-                programName,
-                trainers,
-                enrollments.length,
-                [],
-              ),
-            ),
+          : of(this.mapCohort(cohort, programName, trainers, enrollments.length, [])),
       ),
     );
   }
@@ -255,13 +269,10 @@ export class ClassApiService {
       cohortEndDate: cohort.end_date,
       trainerId: classItem.trainer_id,
       trainerName:
-        trainers.find((trainer) => trainer.id === classItem.trainer_id)?.name ??
-        'Trainer',
+        trainers.find((trainer) => trainer.id === classItem.trainer_id)?.name ?? 'Trainer',
       date: classItem.class_date,
       topic: classItem.topic,
-      attendance: attendance.map((record) =>
-        this.normalizeStatus(record.status),
-      ),
+      attendance: attendance.map((record) => this.normalizeStatus(record.status)),
       traineeCount,
     };
   }

@@ -1,8 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ClassApiService } from './class-api.service';
 
@@ -12,11 +9,7 @@ describe('ClassApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        ClassApiService,
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), ClassApiService],
     });
     service = TestBed.inject(ClassApiService);
     httpTesting = TestBed.inject(HttpTestingController);
@@ -27,12 +20,8 @@ describe('ClassApiService', () => {
   it('loads scheduled classes and attendance summaries', () => {
     let result: unknown;
     service.getDirectory().subscribe((directory) => (result = directory));
-    httpTesting
-      .expectOne('/api/programs/')
-      .flush([{ id: 1, name: 'Web Development' }]);
-    httpTesting
-      .expectOne('/api/trainers/')
-      .flush([{ id: 7, name: 'Ada Trainer' }]);
+    httpTesting.expectOne('/api/programs/').flush([{ id: 1, name: 'Web Development' }]);
+    httpTesting.expectOne('/api/trainers/').flush([{ id: 7, name: 'Ada Trainer' }]);
     httpTesting.expectOne('/api/cohorts/by-program/1').flush([
       {
         id: 10,
@@ -42,12 +31,8 @@ describe('ClassApiService', () => {
         end_date: '2026-06-30',
       },
     ]);
-    httpTesting
-      .expectOne('/api/cohorts/10/trainers')
-      .flush([{ id: 7, name: 'Ada Trainer' }]);
-    httpTesting
-      .expectOne('/api/cohorts/10/enrollments')
-      .flush([{ id: 20 }, { id: 21 }]);
+    httpTesting.expectOne('/api/cohorts/10/trainers').flush([{ id: 7, name: 'Ada Trainer' }]);
+    httpTesting.expectOne('/api/cohorts/10/enrollments').flush([{ id: 20 }, { id: 21 }]);
     httpTesting.expectOne('/api/cohorts/10/classes').flush([
       {
         id: 30,
@@ -57,10 +42,9 @@ describe('ClassApiService', () => {
         topic: 'HTML',
       },
     ]);
-    httpTesting.expectOne('/api/classes/30/attendance').flush([
-      { status: 'present' },
-      { status: 'late' },
-    ]);
+    httpTesting
+      .expectOne('/api/classes/30/attendance')
+      .flush([{ status: 'present' }, { status: 'late' }]);
 
     expect(result).toEqual({
       cohorts: [
@@ -134,6 +118,59 @@ describe('ClassApiService', () => {
       trainerId: 7,
       date: '2026-02-01',
       topic: 'HTML',
+    });
+  });
+
+  it('creates a recurring schedule using selected weekdays', () => {
+    let result: unknown;
+    service
+      .createRepeating({
+        cohortId: 10,
+        trainerId: 7,
+        weekdays: [0, 2],
+        topic: 'API Foundations',
+      })
+      .subscribe((schedule) => (result = schedule));
+
+    const request = httpTesting.expectOne('/api/cohorts/10/classes/repeating');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      trainer_id: 7,
+      weekdays: [0, 2],
+      topic: 'API Foundations',
+    });
+    request.flush({
+      created_count: 1,
+      skipped_dates: ['2026-01-07'],
+      classes: [
+        {
+          id: 40,
+          cohort_id: 10,
+          trainer_id: 7,
+          class_date: '2026-01-12',
+          topic: 'API Foundations',
+        },
+      ],
+    });
+    expect(result).toEqual({
+      createdCount: 1,
+      skippedDates: ['2026-01-07'],
+      classes: [
+        {
+          id: 40,
+          cohortId: 10,
+          cohortName: '',
+          programName: '',
+          cohortStartDate: '',
+          cohortEndDate: '',
+          trainerId: 7,
+          trainerName: '',
+          date: '2026-01-12',
+          topic: 'API Foundations',
+          attendance: [],
+          traineeCount: 0,
+        },
+      ],
     });
   });
 });

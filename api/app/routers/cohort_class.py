@@ -8,6 +8,8 @@ from app.repositories import cohort_class_repository
 from app.schemas.cohort_class import (
     CohortClassCreate,
     CohortClassRespond,
+    RepeatingCohortClassesCreate,
+    RepeatingCohortClassesRespond,
 )
 
 router = APIRouter(tags=["Classes"])
@@ -31,6 +33,32 @@ def create_class(cohort_id: int, payload: CohortClassCreate):
             status_code=409,
             detail="Class creation failed. Check trainer assignment and cohort date constraints.",
         ) from exc
+
+
+@router.post(
+    "/cohorts/{cohort_id}/classes/repeating",
+    response_model=RepeatingCohortClassesRespond,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_repeating_classes(
+    cohort_id: int, payload: RepeatingCohortClassesCreate
+):
+    try:
+        result = cohort_class_repository.create_repeating_classes(
+            cohort_id,
+            payload.trainer_id,
+            payload.weekdays,
+            payload.topic,
+        )
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Recurring schedule failed. Check trainer assignment and cohort date constraints.",
+        ) from exc
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Cohort not found")
+    return result
 
 
 @router.get(

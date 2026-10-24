@@ -12,6 +12,7 @@ describe('ClassList', () => {
     getDirectory: ReturnType<typeof vi.fn>;
     assignTrainer: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
+    createRepeating: ReturnType<typeof vi.fn>;
   };
 
   const cohort: ClassCohort = {
@@ -51,13 +52,46 @@ describe('ClassList', () => {
           traineeCount: 0,
         }),
       ),
+      createRepeating: vi.fn().mockReturnValue(
+        of({
+          createdCount: 2,
+          skippedDates: ['2022-02-02'],
+          classes: [
+            {
+              id: 31,
+              cohortId: 10,
+              cohortName: '',
+              programName: '',
+              cohortStartDate: '',
+              cohortEndDate: '',
+              trainerId: 7,
+              trainerName: '',
+              date: '2022-02-07',
+              topic: 'HTML',
+              attendance: [],
+              traineeCount: 0,
+            },
+            {
+              id: 32,
+              cohortId: 10,
+              cohortName: '',
+              programName: '',
+              cohortStartDate: '',
+              cohortEndDate: '',
+              trainerId: 7,
+              trainerName: '',
+              date: '2022-02-09',
+              topic: 'HTML',
+              attendance: [],
+              traineeCount: 0,
+            },
+          ],
+        }),
+      ),
     };
     await TestBed.configureTestingModule({
       imports: [ClassList],
-      providers: [
-        provideRouter([]),
-        { provide: ClassApiService, useValue: api },
-      ],
+      providers: [provideRouter([]), { provide: ClassApiService, useValue: api }],
     }).compileComponents();
     fixture = TestBed.createComponent(ClassList);
     await fixture.whenStable();
@@ -79,20 +113,16 @@ describe('ClassList', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(
-      (fixture.componentInstance as unknown as { classDate: string }).classDate,
-    ).toBe('2023-02-22');
-    const dateInput = fixture.nativeElement.querySelector(
-      'input[type="date"]',
-    ) as HTMLInputElement;
+    expect((fixture.componentInstance as unknown as { classDate: string }).classDate).toBe(
+      '2023-02-22',
+    );
+    const dateInput = fixture.nativeElement.querySelector('input[type="date"]') as HTMLInputElement;
     expect(dateInput.value).toBe('2023-02-22');
   });
 
   it('explains the cohort date range when a class date is invalid', async () => {
     const nativeElement = fixture.nativeElement as HTMLElement;
-    nativeElement
-      .querySelector<HTMLButtonElement>('.page-heading button')
-      ?.click();
+    nativeElement.querySelector<HTMLButtonElement>('.page-heading button')?.click();
     fixture.detectChanges();
 
     const topic = nativeElement.querySelector(
@@ -100,9 +130,7 @@ describe('ClassList', () => {
     ) as HTMLInputElement;
     topic.value = 'HTML';
     topic.dispatchEvent(new Event('input'));
-    const dateInput = nativeElement.querySelector(
-      'input[type="date"]',
-    ) as HTMLInputElement;
+    const dateInput = nativeElement.querySelector('input[type="date"]') as HTMLInputElement;
     dateInput.value = '2020-02-22';
     dateInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
@@ -116,11 +144,9 @@ describe('ClassList', () => {
         break;
       }
     }
-    nativeElement
-      .querySelectorAll<HTMLButtonElement>('button')
-      .forEach((button) => {
-        if (button.textContent?.includes('Save Class')) button.click();
-      });
+    nativeElement.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
+      if (button.textContent?.includes('Save Class')) button.click();
+    });
     await fixture.whenStable();
     fixture.detectChanges();
 
@@ -140,9 +166,7 @@ describe('ClassList', () => {
     ) as HTMLInputElement;
     topic.value = 'HTML';
     topic.dispatchEvent(new Event('input'));
-    const dateInput = fixture.nativeElement.querySelector(
-      'input[type="date"]',
-    ) as HTMLInputElement;
+    const dateInput = fixture.nativeElement.querySelector('input[type="date"]') as HTMLInputElement;
     dateInput.value = '2022-02-01';
     dateInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
@@ -157,9 +181,7 @@ describe('ClassList', () => {
       }
     }
 
-    Array.from(
-      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
-    )
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Save Class'))
       ?.click();
     await fixture.whenStable();
@@ -186,9 +208,7 @@ describe('ClassList', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const nativeElement = fixture.nativeElement as HTMLElement;
-    nativeElement
-      .querySelector<HTMLButtonElement>('.page-heading button')
-      ?.click();
+    nativeElement.querySelector<HTMLButtonElement>('.page-heading button')?.click();
     fixture.detectChanges();
 
     const topic = nativeElement.querySelector(
@@ -196,9 +216,7 @@ describe('ClassList', () => {
     ) as HTMLInputElement;
     topic.value = 'HTML';
     topic.dispatchEvent(new Event('input'));
-    const dateInput = nativeElement.querySelector(
-      'input[type="date"]',
-    ) as HTMLInputElement;
+    const dateInput = nativeElement.querySelector('input[type="date"]') as HTMLInputElement;
     dateInput.value = '2022-02-01';
     dateInput.dispatchEvent(new Event('input'));
     fixture.detectChanges();
@@ -219,5 +237,48 @@ describe('ClassList', () => {
 
     expect(api.assignTrainer).not.toHaveBeenCalled();
     expect(api.create).toHaveBeenCalledOnce();
+  });
+
+  it('schedules recurring classes for selected weekdays across the cohort', async () => {
+    const nativeElement = fixture.nativeElement as HTMLElement;
+    nativeElement.querySelector<HTMLButtonElement>('.page-heading button')?.click();
+    fixture.detectChanges();
+    nativeElement.querySelector<HTMLButtonElement>('.schedule-modes button:nth-child(2)')?.click();
+    fixture.detectChanges();
+
+    const topic = nativeElement.querySelector(
+      'input[placeholder="e.g. Intro to SQL"]',
+    ) as HTMLInputElement;
+    topic.value = 'HTML';
+    topic.dispatchEvent(new Event('input'));
+    const monday = nativeElement.querySelector<HTMLInputElement>('.weekday-options input');
+    expect(monday).not.toBeNull();
+    monday!.checked = true;
+    monday!.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    const loader = TestbedHarnessEnvironment.loader(fixture);
+    const selects = await loader.getAllHarnesses(MatSelectHarness);
+    await selects[1].open();
+    for (const option of await selects[1].getOptions()) {
+      if ((await option.getText()).includes('Ada Trainer')) {
+        await option.click();
+        break;
+      }
+    }
+
+    nativeElement.querySelector<HTMLButtonElement>('.form-card .primary-action')?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.assignTrainer).toHaveBeenCalledWith(10, 7);
+    expect(api.createRepeating).toHaveBeenCalledWith({
+      cohortId: 10,
+      trainerId: 7,
+      weekdays: [0],
+      topic: 'HTML',
+    });
+    expect(nativeElement.textContent).toContain('Scheduled 2 classes.');
+    expect(nativeElement.textContent).toContain('Skipped 1 date(s)');
   });
 });

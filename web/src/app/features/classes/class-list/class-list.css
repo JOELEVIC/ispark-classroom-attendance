@@ -53,6 +53,25 @@
   font-size: 18px;
 }
 
+.schedule-modes {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.schedule-modes button {
+  min-height: 40px;
+  border-radius: 8px;
+  color: #53677f;
+  border-color: #dce6f2;
+}
+
+.schedule-modes button.active {
+  color: #1266c3;
+  border-color: #8dbcf1;
+  background: #f1f7ff;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr;
@@ -72,6 +91,51 @@
   margin: -4px 0 14px;
   color: #71839a;
   font-size: 12px;
+  line-height: 1.5;
+}
+
+.weekday-picker {
+  padding: 0;
+  margin: 0 0 14px;
+  border: 0;
+}
+
+.weekday-picker legend {
+  margin-bottom: 8px;
+  color: #53677f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.weekday-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.weekday-options label {
+  display: inline-flex;
+  min-width: 58px;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  color: #53677f;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.schedule-message {
+  padding: 11px 14px;
+  margin: 0 0 14px;
+  border-radius: 9px;
+  color: #087344;
+  background: #e3f7ed;
+  font-size: 13px;
   line-height: 1.5;
 }
 
