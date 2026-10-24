@@ -97,7 +97,7 @@
 
 .roster-row {
   display: grid;
-  grid-template-columns: 24px 40px minmax(130px, 1fr) auto;
+  grid-template-columns: 24px 40px minmax(130px, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   min-height: 70px;
@@ -133,6 +133,81 @@
 .status-options {
   display: flex;
   gap: 5px;
+}
+
+.history-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  color: #4c617a;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-toggle mat-icon {
+  width: 17px;
+  height: 17px;
+  font-size: 17px;
+}
+
+.history-panel {
+  grid-column: 1 / -1;
+  padding: 12px 14px;
+  border-radius: 9px;
+  color: #53677f;
+  background: #f5f8fc;
+  font-size: 12px;
+}
+
+.history-panel h3 {
+  margin: 0 0 8px;
+  color: #31445d;
+  font-size: 13px;
+}
+
+.history-panel p {
+  margin: 0;
+}
+
+.history-panel ol {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.history-panel li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.history-panel li span:first-child {
+  color: #31445d;
+  font-weight: 600;
+}
+
+.history-error {
+  color: #ad3434;
+}
+
+.history-error button {
+  padding: 0;
+  margin-left: 5px;
+  border: 0;
+  color: #1875e5;
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .status-option {
@@ -255,6 +330,12 @@
   .status-options {
     grid-row: 2;
     grid-column: 1 / -1;
+  }
+
+  .history-toggle {
+    grid-row: 3;
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 
   .status-option {

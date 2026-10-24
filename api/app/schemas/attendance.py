@@ -24,3 +24,13 @@ class AttendanceRespond(BaseModel):
     last_changed_by: int
     created_at: datetime
     updated_at: datetime
+
+
+class AttendanceChangeHistoryRespond(BaseModel):
+    id: int
+    attendance_id: int
+    old_status: AttendanceStatus
+    new_status: AttendanceStatus
+    changed_by: int
+    changed_by_name: str
+    changed_at: datetime

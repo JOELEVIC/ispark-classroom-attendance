@@ -48,10 +48,17 @@ psql -h localhost -U ispark_dev_user -d ispark_attendance \
 Run those commands from the repository root. If your shell is already in the
 `api` directory, use `-f sql/schema.sql` and `-f sql/seed.sql` instead.
 
+When applying schema updates to an existing database, rerun `schema.sql` before
+starting the updated API. The schema script uses idempotent table/index creation
+and recreates its trigger functions and triggers.
+
 The seed script is safe to rerun. It creates or reuses two programs, three
 cohorts, three trainers, and 15 trainees (one enrolled in two cohorts), plus
-four classes per cohort and attendance records for those classes. It does not
-delete unrelated database data.
+four classes per cohort and attendance records for those classes. It also
+creates a sample correction history for Ava Johnson in the API Foundations
+class. Existing attendance records are not overwritten; the sample correction
+is recorded only if that attendance has no history yet, so rerunning the seed
+does not duplicate it. The script does not delete unrelated database data.
 
 ### 3. Start the API
 
@@ -88,12 +95,19 @@ the frontend.
 
 ## Tests and production build
 
-Run the backend tests from the repository root:
+The backend test suite uses pytest, included in `api/requirements.txt`. From the
+repository root, activate the API virtual environment and run the full suite:
 
 ```bash
 cd api
 source .venv/bin/activate
 python -m pytest
+```
+
+To run a specific backend test file, pass its path, for example:
+
+```bash
+python -m pytest tests/business_rules/test_attendance_audit.py
 ```
 
 Run the Angular tests or build from the frontend directory:

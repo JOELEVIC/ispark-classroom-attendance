@@ -152,6 +152,56 @@
                 </button>
               }
             </div>
+            <button
+              type="button"
+              class="history-toggle"
+              [attr.aria-label]="'Toggle attendance change history for ' + trainee.name"
+              [attr.aria-expanded]="expandedHistoryId() === trainee.id"
+              [attr.aria-controls]="'history-' + trainee.id"
+              (click)="toggleHistory(trainee.id)"
+            >
+              <mat-icon fontSet="material-symbols-outlined">history</mat-icon>
+              Changes
+            </button>
+            @if (expandedHistoryId() === trainee.id) {
+              <div
+                class="history-panel"
+                [id]="'history-' + trainee.id"
+                role="region"
+                [attr.aria-labelledby]="'history-title-' + trainee.id"
+              >
+                <h3 [id]="'history-title-' + trainee.id">
+                  Attendance change history for {{ trainee.name }}
+                </h3>
+                @if (historyLoading()[trainee.id]) {
+                  <p role="status">Loading change history...</p>
+                } @else if (historyErrors()[trainee.id]) {
+                  <p class="history-error" role="alert">
+                    {{ historyErrors()[trainee.id] }}
+                    <button type="button" (click)="retryHistory(trainee.id)">
+                      Retry
+                    </button>
+                  </p>
+                } @else if (!historyFor(trainee.id).length) {
+                  <p>No changes recorded for this class.</p>
+                } @else {
+                  <ol>
+                    @for (change of historyFor(trainee.id); track change.id) {
+                      <li>
+                        <span>
+                          {{ statusLabel(change.old_status) }} to
+                          {{ statusLabel(change.new_status) }}
+                        </span>
+                        <span>
+                          {{ change.changed_at | date: 'medium' }} ·
+                          {{ change.changed_by_name }}
+                        </span>
+                      </li>
+                    }
+                  </ol>
+                }
+              </div>
+            }
           </mat-card>
         }
       </div>

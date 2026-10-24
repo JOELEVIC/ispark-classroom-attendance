@@ -1,9 +1,12 @@
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Path, Query, status
 from psycopg import IntegrityError
 
 from app.repositories import attendance_repository
-from app.schemas.attendance import AttendanceBatchCreate
+from app.schemas.attendance import (
+    AttendanceBatchCreate,
+    AttendanceChangeHistoryRespond,
+)
 
 router = APIRouter(tags=["Attendance"])
 
@@ -43,6 +46,19 @@ def record_class_attendance(
 @router.get("/classes/{class_id}/attendance")
 def get_class_attendance(class_id: int):
     return attendance_repository.get_attendance_by_class(class_id)
+
+
+@router.get(
+    "/classes/{class_id}/attendance/{trainee_id}/history",
+    response_model=list[AttendanceChangeHistoryRespond],
+)
+def get_attendance_change_history(
+    class_id: int = Path(gt=0),
+    trainee_id: int = Path(gt=0),
+):
+    return attendance_repository.get_attendance_change_history(
+        class_id, trainee_id
+    )
 
 
 @router.get("/trainees/{trainee_id}/attendance")

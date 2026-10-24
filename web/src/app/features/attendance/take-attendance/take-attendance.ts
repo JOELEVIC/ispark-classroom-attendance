@@ -10,6 +10,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AttendanceStatus } from '../../../core/mock-data';
 import {
   AttendanceApiService,
+  AttendanceChange,
   AttendanceClass,
   AttendanceCohort,
   AttendanceEntry,
@@ -44,6 +45,12 @@ export class TakeAttendance implements OnInit {
   protected readonly attendanceLoading = signal(false);
   protected readonly attendanceReady = signal(false);
   protected readonly attendanceLoadFailed = signal(false);
+  protected readonly changeHistory = signal<Record<number, AttendanceChange[]>>(
+    {},
+  );
+  protected readonly historyLoading = signal<Record<number, boolean>>({});
+  protected readonly historyErrors = signal<Record<number, string>>({});
+  protected readonly expandedHistoryId = signal<number | null>(null);
   protected readonly submitting = signal(false);
   protected readonly loadError = signal<string | null>(null);
   protected errorMessage = '';
@@ -127,6 +134,10 @@ export class TakeAttendance implements OnInit {
     this.attendanceDraft = Object.fromEntries(
       this.trainees.map((trainee) => [trainee.id, null]),
     );
+    this.changeHistory.set({});
+    this.historyLoading.set({});
+    this.historyErrors.set({});
+    this.expandedHistoryId.set(null);
     this.attendanceReady.set(false);
     this.attendanceLoadFailed.set(false);
     if (classId === null) {
@@ -165,6 +176,31 @@ export class TakeAttendance implements OnInit {
     this.errorMessage = '';
   }
 
+  protected toggleHistory(traineeId: number): void {
+    if (this.expandedHistoryId() === traineeId) {
+      this.expandedHistoryId.set(null);
+      return;
+    }
+
+    this.expandedHistoryId.set(traineeId);
+    if (Object.hasOwn(this.changeHistory(), traineeId)) {
+      return;
+    }
+    this.loadChangeHistory(traineeId);
+  }
+
+  protected retryHistory(traineeId: number): void {
+    this.loadChangeHistory(traineeId);
+  }
+
+  protected historyFor(traineeId: number): AttendanceChange[] {
+    return this.changeHistory()[traineeId] ?? [];
+  }
+
+  protected statusLabel(status: AttendanceStatus): string {
+    return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+
   protected saveAttendance(): void {
     const classItem = this.selectedClass;
     if (
@@ -195,6 +231,11 @@ export class TakeAttendance implements OnInit {
         next: () => {
           this.saved = true;
           this.submitting.set(false);
+          this.changeHistory.set({});
+          const expandedTraineeId = this.expandedHistoryId();
+          if (expandedTraineeId !== null) {
+            this.loadChangeHistory(expandedTraineeId);
+          }
         },
         error: (error: unknown) => {
           console.error('Failed to save attendance', error);
@@ -209,10 +250,6 @@ export class TakeAttendance implements OnInit {
     return this.trainees.filter(
       (trainee) => this.statusFor(trainee.id) !== null,
     ).length;
-  }
-
-  protected statusLabel(status: AttendanceStatus): string {
-    return status.charAt(0).toUpperCase() + status.slice(1);
   }
 
   private selectRequestedClass(): void {
@@ -230,5 +267,53 @@ export class TakeAttendance implements OnInit {
     if (this.classId !== requestedId) {
       this.selectClass(requestedId);
     }
+  }
+
+  private loadChangeHistory(traineeId: number): void {
+    const classId = this.classId;
+    if (classId === null) {
+      return;
+    }
+
+    this.historyLoading.update((loading) => ({
+      ...loading,
+      [traineeId]: true,
+    }));
+    this.historyErrors.update((errors) => {
+      const next = { ...errors };
+      delete next[traineeId];
+      return next;
+    });
+    this.attendanceApi
+      .getAttendanceChangeHistory(classId, traineeId)
+      .subscribe({
+        next: (history) => {
+          if (this.classId !== classId) {
+            return;
+          }
+          this.changeHistory.update((current) => ({
+            ...current,
+            [traineeId]: history,
+          }));
+          this.historyLoading.update((loading) => ({
+            ...loading,
+            [traineeId]: false,
+          }));
+        },
+        error: (error: unknown) => {
+          if (this.classId !== classId) {
+            return;
+          }
+          console.error('Failed to load attendance change history', error);
+          this.historyErrors.update((errors) => ({
+            ...errors,
+            [traineeId]: "Couldn't load change history. Try again.",
+          }));
+          this.historyLoading.update((loading) => ({
+            ...loading,
+            [traineeId]: false,
+          }));
+        },
+      });
   }
 }

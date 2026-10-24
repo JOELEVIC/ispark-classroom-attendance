@@ -61,6 +61,16 @@ export interface AttendanceEntry {
   status: AttendanceStatus;
 }
 
+export interface AttendanceChange {
+  id: number;
+  attendance_id: number;
+  old_status: AttendanceStatus;
+  new_status: AttendanceStatus;
+  changed_by: number;
+  changed_by_name: string;
+  changed_at: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AttendanceApiService {
   private readonly http = inject(HttpClient);
@@ -113,6 +123,15 @@ export class AttendanceApiService {
               ]),
             ),
         ),
+      );
+  }
+
+  getAttendanceChangeHistory(
+      classId: number,
+      traineeId: number,
+  ): Observable<AttendanceChange[]> {
+      return this.http.get<AttendanceChange[]>(
+        `${this.apiBaseUrl}/classes/${classId}/attendance/${traineeId}/history`,
       );
   }
 

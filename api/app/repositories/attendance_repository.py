@@ -77,6 +77,30 @@ def get_attendance_by_class(class_id: int):
             return cur.fetchall()
 
 
+def get_attendance_change_history(class_id: int, trainee_id: int):
+    query = """
+        SELECT
+            history.id,
+            history.attendance_id,
+            LOWER(history.old_status) AS old_status,
+            LOWER(history.new_status) AS new_status,
+            history.changed_by,
+            trainers.name AS changed_by_name,
+            history.changed_at
+        FROM attendance_change_history AS history
+        JOIN attendance AS a ON a.id = history.attendance_id
+        JOIN trainers ON trainers.id = history.changed_by
+        WHERE a.class_id = %s
+          AND a.trainee_id = %s
+        ORDER BY history.changed_at, history.id;
+    """
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, (class_id, trainee_id))
+            return cur.fetchall()
+
+
 def get_trainee_attendance_history(
     trainee_id: int,
     cohort_id: int,

@@ -3,7 +3,8 @@
 --   -v ON_ERROR_STOP=1 -f api/sql/seed.sql
 --
 -- This seed is safe to rerun. It keeps the named sample records, enrollments,
--- classes, and attendance in sync without deleting other database data.
+-- classes, and attendance without overwriting existing attendance records or
+-- deleting other database data.
 
 BEGIN;
 
@@ -235,16 +236,23 @@ BEGIN
         cc.id,
         cc.cohort_id,
         e.trainee_id,
-        CASE MOD(cc.id + e.trainee_id, 4)
-            WHEN 0 THEN 'PRESENT'
-            WHEN 1 THEN 'LATE'
-            WHEN 2 THEN 'ABSENT'
-            ELSE 'EXCUSED'
+        CASE
+            WHEN cc.cohort_id = backend_cohort_3_id
+             AND cc.topic = 'API Foundations'
+             AND t.name = 'Ava Johnson'
+                THEN 'PRESENT'
+            ELSE CASE MOD(cc.id + e.trainee_id, 4)
+                WHEN 0 THEN 'PRESENT'
+                WHEN 1 THEN 'LATE'
+                WHEN 2 THEN 'ABSENT'
+                ELSE 'EXCUSED'
+            END
         END,
         cc.trainer_id,
         cc.trainer_id
     FROM cohort_classes AS cc
     JOIN enrollments AS e ON e.cohort_id = cc.cohort_id
+    JOIN trainees AS t ON t.id = e.trainee_id
     WHERE (
         (cc.cohort_id = backend_cohort_3_id
             AND cc.topic IN (
@@ -263,10 +271,27 @@ BEGIN
             ))
     )
     ON CONFLICT ON CONSTRAINT attendance_one_record_per_trainee_per_class
-    DO UPDATE SET
-        status = EXCLUDED.status,
-        recorded_by = EXCLUDED.recorded_by,
-        last_changed_by = EXCLUDED.last_changed_by;
+    DO NOTHING;
+
+    UPDATE attendance AS a
+    SET status = CASE
+            WHEN a.status = 'LATE' THEN 'PRESENT'
+            ELSE 'LATE'
+        END,
+        last_changed_by = cc.trainer_id
+    FROM cohort_classes AS cc
+    JOIN enrollments AS e ON e.cohort_id = cc.cohort_id
+    JOIN trainees AS t ON t.id = e.trainee_id
+    WHERE a.class_id = cc.id
+      AND a.trainee_id = e.trainee_id
+      AND cc.cohort_id = backend_cohort_3_id
+      AND cc.topic = 'API Foundations'
+      AND t.name = 'Ava Johnson'
+      AND NOT EXISTS (
+          SELECT 1
+          FROM attendance_change_history AS history
+          WHERE history.attendance_id = a.id
+      );
 END;
 $$;
 

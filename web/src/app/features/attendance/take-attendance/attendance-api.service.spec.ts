@@ -84,6 +84,35 @@ describe('AttendanceApiService', () => {
     );
   });
 
+  it('loads correction history for one trainee in one class', () => {
+    let result: unknown;
+    service
+      .getAttendanceChangeHistory(30, 20)
+      .subscribe((history) => (result = history));
+    httpTesting.expectOne('/api/classes/30/attendance/20/history').flush([
+      {
+        id: 5,
+        attendance_id: 2,
+        old_status: 'present',
+        new_status: 'late',
+        changed_by: 7,
+        changed_by_name: 'Ada Trainer',
+        changed_at: '2026-02-02T10:00:00Z',
+      },
+    ]);
+    expect(result).toEqual([
+      {
+        id: 5,
+        attendance_id: 2,
+        old_status: 'present',
+        new_status: 'late',
+        changed_by: 7,
+        changed_by_name: 'Ada Trainer',
+        changed_at: '2026-02-02T10:00:00Z',
+      },
+    ]);
+  });
+
   it('posts attendance with cohort and trainer query parameters', () => {
     service
       .saveAttendance(30, 10, 7, [

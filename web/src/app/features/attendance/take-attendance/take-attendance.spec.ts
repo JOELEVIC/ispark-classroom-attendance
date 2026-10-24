@@ -9,6 +9,7 @@ describe('TakeAttendance', () => {
   let api: {
     getCohorts: ReturnType<typeof vi.fn>;
     getClassAttendance: ReturnType<typeof vi.fn>;
+    getAttendanceChangeHistory: ReturnType<typeof vi.fn>;
     saveAttendance: ReturnType<typeof vi.fn>;
   };
 
@@ -41,6 +42,19 @@ describe('TakeAttendance', () => {
       getClassAttendance: vi
         .fn()
         .mockReturnValue(of(new Map([[1, 'present' as const]]))),
+      getAttendanceChangeHistory: vi.fn().mockReturnValue(
+        of([
+          {
+            id: 5,
+            attendance_id: 2,
+            old_status: 'present',
+            new_status: 'late',
+            changed_by: 7,
+            changed_by_name: 'Amina Trainer',
+            changed_at: '2026-02-02T10:00:00Z',
+          },
+        ]),
+      ),
       saveAttendance: vi.fn().mockReturnValue(of({ records: [] })),
     };
     await TestBed.configureTestingModule({
@@ -87,5 +101,21 @@ describe('TakeAttendance', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Attendance saved for 2 trainees.',
     );
+  });
+
+  it('loads and displays correction history on demand for a trainee', async () => {
+    const historyButton = (
+      fixture.nativeElement as HTMLElement
+    ).querySelector<HTMLButtonElement>('.history-toggle');
+    historyButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.getAttendanceChangeHistory).toHaveBeenCalledWith(30, 1);
+    const historyPanel = (
+      fixture.nativeElement as HTMLElement
+    ).querySelector('.history-panel');
+    expect(historyPanel?.textContent).toContain('Present to Late');
+    expect(historyPanel?.textContent).toContain('Amina Trainer');
   });
 });

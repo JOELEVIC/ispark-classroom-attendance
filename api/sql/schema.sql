@@ -84,6 +84,21 @@ CREATE TABLE IF NOT EXISTS attendance (
     CONSTRAINT attendance_one_record_per_trainee_per_class UNIQUE (class_id, trainee_id) 
 );
 
+CREATE TABLE IF NOT EXISTS attendance_change_history (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    attendance_id BIGINT NOT NULL REFERENCES attendance(id) ON DELETE RESTRICT,
+    cohort_id BIGINT NOT NULL,
+    old_status VARCHAR(10) NOT NULL
+        CHECK (old_status IN ('PRESENT', 'ABSENT', 'LATE', 'EXCUSED')),
+    new_status VARCHAR(10) NOT NULL
+        CHECK (new_status IN ('PRESENT', 'ABSENT', 'LATE', 'EXCUSED')),
+    changed_by BIGINT NOT NULL,
+    changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT attendance_change_history_cohort_trainer_fk
+        FOREIGN KEY (cohort_id, changed_by)
+        REFERENCES cohort_trainers(cohort_id, trainer_id) ON DELETE RESTRICT
+);
+
 
 -- INDEXES
 
@@ -92,6 +107,8 @@ CREATE INDEX IF NOT EXISTS idx_cohort_trainers_trainer_id ON cohort_trainers(tra
 CREATE INDEX IF NOT EXISTS idx_enrollments_cohort_id ON enrollments(cohort_id);
 CREATE INDEX IF NOT EXISTS idx_cohort_classes_cohort_date ON cohort_classes(cohort_id, class_date);
 CREATE INDEX IF NOT EXISTS idx_attendance_trainee_class ON attendance(trainee_id, class_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_change_history_attendance
+    ON attendance_change_history(attendance_id, changed_at, id);
 
 
 -- CROSS TABLE RULES
@@ -171,5 +188,39 @@ BEFORE INSERT OR UPDATE
 ON attendance
 FOR EACH ROW
 EXECUTE FUNCTION validate_attendance_class_date();
+
+-- Preserve every actual status correction, including the trainer who made it.
+CREATE OR REPLACE FUNCTION record_attendance_status_change()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.status IS DISTINCT FROM NEW.status THEN
+        INSERT INTO attendance_change_history (
+            attendance_id,
+            cohort_id,
+            old_status,
+            new_status,
+            changed_by
+        )
+        VALUES (
+            NEW.id,
+            NEW.cohort_id,
+            OLD.status,
+            NEW.status,
+            NEW.last_changed_by
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_record_attendance_status_change
+ON attendance;
+
+CREATE TRIGGER trg_record_attendance_status_change
+AFTER UPDATE OF status
+ON attendance
+FOR EACH ROW
+EXECUTE FUNCTION record_attendance_status_change();
 
 COMMIT;
