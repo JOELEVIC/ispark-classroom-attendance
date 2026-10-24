@@ -115,6 +115,14 @@
   font-size: 12px;
 }
 
+.export-button {
+  flex: 0 0 auto;
+  min-height: 40px;
+  border-radius: 9px;
+  color: #1875e5 !important;
+  border-color: #c9dcf4;
+}
+
 .table-wrap {
   overflow-x: auto;
   border: 1px solid #e4ebf4;

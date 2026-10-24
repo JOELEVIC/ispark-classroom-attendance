@@ -33,6 +33,18 @@ export interface EnrollmentDirectory {
   trainees: EnrolledTrainee[];
 }
 
+export interface EnrollmentImportFailure {
+  row: number;
+  name: string | null;
+  reason: string;
+}
+
+export interface EnrollmentImportResult {
+  imported_count: number;
+  total_rows: number;
+  failures: EnrollmentImportFailure[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class EnrollmentApiService {
   private readonly http = inject(HttpClient);
@@ -40,12 +52,8 @@ export class EnrollmentApiService {
 
   getDirectory(): Observable<EnrollmentDirectory> {
     return forkJoin({
-      programs: this.http.get<{ id: number; name: string }[]>(
-        `${this.apiBaseUrl}/programs/`,
-      ),
-      trainees: this.http.get<EnrolledTrainee[]>(
-        `${this.apiBaseUrl}/trainees/`,
-      ),
+      programs: this.http.get<{ id: number; name: string }[]>(`${this.apiBaseUrl}/programs/`),
+      trainees: this.http.get<EnrolledTrainee[]>(`${this.apiBaseUrl}/trainees/`),
     }).pipe(
       switchMap(({ programs, trainees }) => {
         if (programs.length === 0) {
@@ -53,36 +61,32 @@ export class EnrollmentApiService {
         }
         return forkJoin(
           programs.map((program) =>
-            this.http
-              .get<ApiCohort[]>(
-                `${this.apiBaseUrl}/cohorts/by-program/${program.id}`,
-              )
-              .pipe(
-                switchMap((cohorts) =>
-                  cohorts.length
-                    ? forkJoin(
-                        cohorts.map((cohort) =>
-                          this.http
-                            .get<ApiEnrollment[]>(
-                              `${this.apiBaseUrl}/cohorts/${cohort.id}/enrollments`,
-                            )
-                            .pipe(
-                              map((enrollments) => ({
-                                id: cohort.id,
-                                programId: cohort.program_id,
-                                name: cohort.name,
-                                programName: program.name,
-                                trainees: enrollments.map((enrollment) => ({
-                                  id: enrollment.trainee_id,
-                                  name: enrollment.trainee_name,
-                                })),
+            this.http.get<ApiCohort[]>(`${this.apiBaseUrl}/cohorts/by-program/${program.id}`).pipe(
+              switchMap((cohorts) =>
+                cohorts.length
+                  ? forkJoin(
+                      cohorts.map((cohort) =>
+                        this.http
+                          .get<ApiEnrollment[]>(
+                            `${this.apiBaseUrl}/cohorts/${cohort.id}/enrollments`,
+                          )
+                          .pipe(
+                            map((enrollments) => ({
+                              id: cohort.id,
+                              programId: cohort.program_id,
+                              name: cohort.name,
+                              programName: program.name,
+                              trainees: enrollments.map((enrollment) => ({
+                                id: enrollment.trainee_id,
+                                name: enrollment.trainee_name,
                               })),
-                            ),
-                        ),
-                      )
-                    : of([]),
-                ),
+                            })),
+                          ),
+                      ),
+                    )
+                  : of([]),
               ),
+            ),
           ),
         ).pipe(
           map((cohortGroups) => ({
@@ -95,9 +99,17 @@ export class EnrollmentApiService {
   }
 
   enroll(cohortId: number, traineeId: number): Observable<unknown> {
-    return this.http.post(
-      `${this.apiBaseUrl}/cohorts/${cohortId}/enrollments`,
-      { trainee_id: traineeId },
+    return this.http.post(`${this.apiBaseUrl}/cohorts/${cohortId}/enrollments`, {
+      trainee_id: traineeId,
+    });
+  }
+
+  importCsv(cohortId: number, file: File): Observable<EnrollmentImportResult> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<EnrollmentImportResult>(
+      `${this.apiBaseUrl}/cohorts/${cohortId}/enrollments/import`,
+      formData,
     );
   }
 }

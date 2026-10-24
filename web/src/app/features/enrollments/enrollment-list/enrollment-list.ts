@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +10,7 @@ import {
   EnrolledTrainee,
   EnrollmentApiService,
   EnrollmentCohort,
+  EnrollmentImportResult,
 } from './enrollment-api.service';
 
 @Component({
@@ -31,25 +33,25 @@ export class EnrollmentList {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly submitting = signal(false);
+  protected readonly importing = signal(false);
+  protected readonly importResult = signal<EnrollmentImportResult | null>(null);
   protected selectedCohortId: number | null = null;
   protected selectedTraineeId: number | null = null;
+  protected selectedCsv: File | null = null;
   protected errorMessage = '';
   protected successMessage = '';
+  protected importError = '';
 
   constructor() {
     this.loadDirectory();
   }
 
   protected get selectedCohort(): EnrollmentCohort | undefined {
-    return this.cohorts().find(
-      (cohort) => cohort.id === this.selectedCohortId,
-    );
+    return this.cohorts().find((cohort) => cohort.id === this.selectedCohortId);
   }
 
   protected get availableTrainees(): EnrolledTrainee[] {
-    const enrolledIds = new Set(
-      this.selectedCohort?.trainees.map((trainee) => trainee.id) ?? [],
-    );
+    const enrolledIds = new Set(this.selectedCohort?.trainees.map((trainee) => trainee.id) ?? []);
     return this.trainees().filter((trainee) => !enrolledIds.has(trainee.id));
   }
 
@@ -77,6 +79,46 @@ export class EnrollmentList {
     this.selectedTraineeId = null;
     this.errorMessage = '';
     this.successMessage = '';
+    this.importResult.set(null);
+    this.importError = '';
+  }
+
+  protected onCsvSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedCsv = input.files?.[0] ?? null;
+    this.importResult.set(null);
+    this.importError = '';
+  }
+
+  protected importCsv(): void {
+    const cohortId = this.selectedCohortId;
+    const file = this.selectedCsv;
+    if (cohortId === null || file === null) {
+      return;
+    }
+
+    this.importError = '';
+    this.importResult.set(null);
+    this.importing.set(true);
+    this.enrollmentApi.importCsv(cohortId, file).subscribe({
+      next: (result) => {
+        if (this.selectedCohortId === cohortId) {
+          this.importResult.set(result);
+          this.loadDirectory();
+        }
+        this.importing.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to import enrollment CSV', error);
+        if (this.selectedCohortId === cohortId) {
+          this.importError =
+            error instanceof HttpErrorResponse && typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : "Couldn't import the CSV. Please check the file and try again.";
+        }
+        this.importing.set(false);
+      },
+    });
   }
 
   protected enrollTrainee(): void {
@@ -107,8 +149,7 @@ export class EnrollmentList {
       },
       error: (error: unknown) => {
         console.error('Failed to enroll trainee', error);
-        this.errorMessage =
-          "Couldn't enroll trainee. They may already be in this cohort.";
+        this.errorMessage = "Couldn't enroll trainee. They may already be in this cohort.";
         this.submitting.set(false);
       },
     });

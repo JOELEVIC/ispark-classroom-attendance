@@ -61,6 +61,33 @@ export interface ReportTrainee {
   belowThreshold: boolean;
 }
 
+export function buildCohortReportCsv(trainees: ReportTrainee[]): string {
+  const rows = [
+    ['Trainee', 'Present', 'Absent', 'Late', 'Excused', 'Attendance rate (%)'],
+    ...trainees.map((trainee) => [
+      trainee.name,
+      trainee.counts.present,
+      trainee.counts.absent,
+      trainee.counts.late,
+      trainee.counts.excused,
+      trainee.attendanceRate === null ? 'N/A' : trainee.attendanceRate.toFixed(2),
+    ]),
+  ];
+  const csvRows = rows.map((row) =>
+    row
+      .map((value) => {
+        let cell = String(value);
+        if (/^[\t\r ]*[=+\-@]/.test(cell)) {
+          cell = `'${cell}`;
+        }
+        return `"${cell.replaceAll('"', '""')}"`;
+      })
+      .join(','),
+  );
+
+  return `\uFEFF${csvRows.join('\r\n')}\r\n`;
+}
+
 export interface ReportClass {
   id: number;
   date: string;

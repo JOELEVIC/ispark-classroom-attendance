@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ReportApiService } from './report-api.service';
+import { buildCohortReportCsv, ReportApiService, ReportTrainee } from './report-api.service';
 
 describe('ReportApiService', () => {
   let service: ReportApiService;
@@ -53,6 +53,31 @@ describe('ReportApiService', () => {
         belowThreshold: false,
       },
     ]);
+  });
+
+  it('builds a quoted, formula-safe CSV report with N/A for uncounted rates', () => {
+    const trainees: ReportTrainee[] = [
+      {
+        id: 20,
+        name: '=SUM(1,2)',
+        counts: { present: 2, absent: 1, late: 1, excused: 3 },
+        attendanceRate: 75,
+        belowThreshold: false,
+      },
+      {
+        id: 21,
+        name: 'Sam "Trainee"',
+        counts: { present: 0, absent: 0, late: 0, excused: 1 },
+        attendanceRate: null,
+        belowThreshold: false,
+      },
+    ];
+
+    expect(buildCohortReportCsv(trainees)).toBe(
+      '\uFEFF"Trainee","Present","Absent","Late","Excused","Attendance rate (%)"\r\n' +
+        '"\'=SUM(1,2)","2","1","1","3","75.00"\r\n' +
+        '"Sam ""Trainee""","0","0","0","1","N/A"\r\n',
+    );
   });
 
   it('loads a trainee history with the cohort filter', () => {

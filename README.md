@@ -130,3 +130,16 @@ Late counts as attended. Excused records are excluded from the denominator so
 approved absences do not lower the trainee's rate. A trainee with no countable
 attendance records has an N/A rate. Rates below 75% are flagged in the cohort
 report.
+
+## CSV report and enrollment tools
+
+The Cohort Report page can download a CSV with one row per trainee, containing
+their Present, Absent, Late, and Excused totals and attendance rate. Rates with
+no countable attendance are exported as `N/A`.
+
+The Enrollments page accepts a CSV with exactly one `name` column. Each name
+must exactly match one existing trainee after surrounding whitespace is
+trimmed; imports do not create trainees. Already-enrolled trainees, repeated
+names, unknown or ambiguous names, blank names, and malformed rows are reported
+with their CSV row number and reason. Uploads are limited to 1 MB and must use
+UTF-8.

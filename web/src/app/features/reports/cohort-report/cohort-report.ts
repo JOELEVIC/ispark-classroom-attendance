@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { forkJoin } from 'rxjs';
 import { AttendanceStatus } from '../../../core/mock-data';
 import {
+  buildCohortReportCsv,
   ClassAttendanceSummary,
   ReportApiService,
   ReportClass,
@@ -118,6 +119,29 @@ export class CohortReport {
 
   protected statusCount(status: AttendanceStatus): number {
     return this.classSummary()?.counts[status] ?? 0;
+  }
+
+  protected exportReport(): void {
+    const cohort = this.cohorts().find((item) => item.id === this.cohortId);
+    if (!cohort) {
+      return;
+    }
+
+    const filenameBase = `${cohort.programName}-${cohort.name}`
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    const blob = new Blob([buildCohortReportCsv(this.trainees())], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${filenameBase}-attendance-report.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   protected unmarkedTrainees(): { id: number; name: string }[] {

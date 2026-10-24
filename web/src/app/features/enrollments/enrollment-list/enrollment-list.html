@@ -3,9 +3,7 @@
     <div>
       <p class="eyebrow">PEOPLE MANAGEMENT</p>
       <h1>Enrollments</h1>
-      <p class="page-intro">
-        Manage which trainees belong to each cohort.
-      </p>
+      <p class="page-intro">Manage which trainees belong to each cohort.</p>
     </div>
   </header>
 
@@ -14,9 +12,7 @@
   } @else if (loadError()) {
     <div class="empty-state error-message" role="alert">
       <p>{{ loadError() }}</p>
-      <button mat-stroked-button type="button" (click)="loadDirectory()">
-        Retry
-      </button>
+      <button mat-stroked-button type="button" (click)="loadDirectory()">Retry</button>
     </div>
   } @else if (!cohorts().length) {
     <div class="empty-state">
@@ -39,10 +35,7 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Cohort</mat-label>
-          <mat-select
-            [(ngModel)]="selectedCohortId"
-            (selectionChange)="onCohortChange()"
-          >
+          <mat-select [(ngModel)]="selectedCohortId" (selectionChange)="onCohortChange()">
             @for (cohort of cohorts(); track cohort.id) {
               <mat-option [value]="cohort.id">
                 {{ cohort.programName }} · {{ cohort.name }}
@@ -92,6 +85,61 @@
             {{ successMessage }}
           </p>
         }
+
+        <section class="csv-import" aria-labelledby="csv-import-heading">
+          <div class="section-title">
+            <span class="section-icon">
+              <mat-icon fontSet="material-symbols-outlined">upload_file</mat-icon>
+            </span>
+            <div>
+              <h2 id="csv-import-heading">Import from CSV</h2>
+              <p>Use a CSV with one column headed <code>name</code>.</p>
+            </div>
+          </div>
+          <label class="file-label" for="enrollment-csv"> Select CSV file </label>
+          <input
+            id="enrollment-csv"
+            type="file"
+            accept=".csv,text/csv"
+            (change)="onCsvSelected($event)"
+          />
+          @if (selectedCsv) {
+            <p class="selected-file">{{ selectedCsv.name }}</p>
+          }
+          <button
+            mat-stroked-button
+            type="button"
+            class="import-action"
+            [disabled]="!selectedCsv || importing()"
+            (click)="importCsv()"
+          >
+            <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
+            {{ importing() ? 'Importing...' : 'Import trainees' }}
+          </button>
+          @if (importError) {
+            <p class="error-message" role="alert">{{ importError }}</p>
+          }
+          @if (importResult(); as result) {
+            <div class="import-result" role="status">
+              <p>
+                Enrolled {{ result.imported_count }} of {{ result.total_rows }}
+                CSV rows.
+              </p>
+              @if (result.failures.length) {
+                <h3>Rows not imported</h3>
+                <ul>
+                  @for (failure of result.failures; track failure.row) {
+                    <li>
+                      <strong>Row {{ failure.row }}</strong>
+                      <span>{{ failure.name || 'Blank name' }}</span>
+                      <span>{{ failure.reason }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </section>
       </mat-card>
 
       @if (selectedCohort; as cohort) {

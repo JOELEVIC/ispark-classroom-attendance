@@ -47,6 +47,16 @@
             <h2 id="trainee-report-heading">Trainee attendance</h2>
             <p>Select a trainee to view their class-by-class history.</p>
           </div>
+          <button
+            mat-stroked-button
+            type="button"
+            class="export-button"
+            [disabled]="reportLoading()"
+            (click)="exportReport()"
+          >
+            <mat-icon fontSet="material-symbols-outlined">download</mat-icon>
+            Export CSV
+          </button>
         </div>
         <div class="table-wrap">
           <table>
