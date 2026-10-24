@@ -26,21 +26,24 @@ def record_class_attendance(
     cohort_id: int = Query(gt=0),
     trainer_id: int = Query(gt=0),
 ):
-    results = []
-
     try:
-        for entry in payload.records:
-            result = attendance_repository.record_attendance(
-                class_id=class_id,
-                cohort_id=cohort_id,
-                trainee_id=entry.trainee_id,
-                status=entry.status.value,
-                trainer_id=trainer_id,
-            )
-            results.append(result)
+        results = attendance_repository.record_attendance_batch(
+            class_id=class_id,
+            cohort_id=cohort_id,
+            records=[
+                (entry.trainee_id, entry.status.value)
+                for entry in payload.records
+            ],
+            trainer_id=trainer_id,
+        )
 
     except (CohortNotFoundError, CohortFinishedError) as exc:
         raise_cohort_error(exc)
+    except attendance_repository.TrainerNotAssignedToClassError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the trainer assigned to this class can record attendance.",
+        ) from exc
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,

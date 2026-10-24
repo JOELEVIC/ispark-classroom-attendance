@@ -36,3 +36,25 @@ def test_attendance_change_history_endpoint_returns_corrections(monkeypatch):
             "changed_at": "2026-10-23T09:30:00Z",
         }
     ]
+
+
+def test_attendance_recording_rejects_non_assigned_trainer(monkeypatch):
+    def reject_trainer(**kwargs):
+        raise attendance.attendance_repository.TrainerNotAssignedToClassError
+
+    monkeypatch.setattr(
+        attendance.attendance_repository,
+        "record_attendance_batch",
+        reject_trainer,
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/classes/5/attendance?cohort_id=2&trainer_id=9",
+        json={"records": [{"trainee_id": 3, "status": "present"}]},
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": "Only the trainer assigned to this class can record attendance."
+    }

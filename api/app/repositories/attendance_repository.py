@@ -2,11 +2,14 @@ from app.db.connection import get_db_connection
 from app.repositories.cohort_repository import lock_active_cohort
 
 
-def record_attendance(
+class TrainerNotAssignedToClassError(Exception):
+    pass
+
+
+def record_attendance_batch(
     class_id: int,
     cohort_id: int,
-    trainee_id: int,
-    status: str,
+    records: list[tuple[int, str]],
     trainer_id: int,
 ):
     query = """
@@ -36,22 +39,37 @@ def record_attendance(
             created_at,
             updated_at;
     """
-
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             lock_active_cohort(cur, cohort_id)
             cur.execute(
-                query,
-                (
-                    class_id,
-                    cohort_id,
-                    trainee_id,
-                    status.upper(),
-                    trainer_id,
-                    trainer_id,
-                ),
+                """
+                SELECT 1
+                FROM cohort_classes
+                WHERE id = %s
+                  AND cohort_id = %s
+                  AND trainer_id = %s
+                """,
+                (class_id, cohort_id, trainer_id),
             )
-            return cur.fetchone()
+            if cur.fetchone() is None:
+                raise TrainerNotAssignedToClassError
+
+            results = []
+            for trainee_id, attendance_status in records:
+                cur.execute(
+                    query,
+                    (
+                        class_id,
+                        cohort_id,
+                        trainee_id,
+                        attendance_status.upper(),
+                        trainer_id,
+                        trainer_id,
+                    ),
+                )
+                results.append(cur.fetchone())
+            return results
 
 
 def get_attendance_by_class(class_id: int):
