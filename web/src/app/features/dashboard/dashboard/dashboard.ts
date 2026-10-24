@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,9 +13,9 @@ import { DashboardApiService, DashboardStats } from './dashboard-api.service';
 })
 export class Dashboard {
   private readonly dashboardApi = inject(DashboardApiService);
-  protected loading = true;
-  protected errorMessage: string | null = null;
-  protected readonly stats = [
+  protected readonly loading = signal(true);
+  protected readonly errorMessage = signal<string | null>(null);
+  protected readonly stats = signal([
     {
       label: 'Programs',
       value: '—',
@@ -44,36 +44,42 @@ export class Dashboard {
       color: 'amber',
       route: '/attendance',
     },
-  ];
+  ]);
 
   constructor() {
     this.loadStats();
   }
 
   protected loadStats(): void {
-    this.loading = true;
-    this.errorMessage = null;
+    this.loading.set(true);
+    this.errorMessage.set(null);
 
     this.dashboardApi.getStats().subscribe({
       next: (dashboardStats) => {
         this.updateStats(dashboardStats);
-        this.loading = false;
+        this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage =
-          "Dashboard counts couldn't be loaded. Check the API connection and try again.";
-        this.loading = false;
+      error: (error: unknown) => {
+        console.error('Failed to load dashboard statistics', error);
+        this.errorMessage.set(
+          "Dashboard counts couldn't be loaded. Check the API connection and try again.",
+        );
+        this.loading.set(false);
       },
     });
   }
 
   private updateStats(dashboardStats: DashboardStats): void {
-    this.stats[0].value = String(dashboardStats.programs);
-    this.stats[1].value = String(dashboardStats.cohorts);
-    this.stats[2].value = String(dashboardStats.trainees);
-    this.stats[3].value =
+    const values = [
+      String(dashboardStats.programs),
+      String(dashboardStats.cohorts),
+      String(dashboardStats.trainees),
       dashboardStats.averageAttendance === null
         ? '—'
-        : `${Math.round(dashboardStats.averageAttendance)}%`;
+        : `${Math.round(dashboardStats.averageAttendance)}%`,
+    ];
+    this.stats.update((stats) =>
+      stats.map((stat, index) => ({ ...stat, value: values[index] })),
+    );
   }
 }

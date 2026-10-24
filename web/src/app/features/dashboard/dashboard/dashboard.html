@@ -7,9 +7,9 @@
   <section
     class="stats-grid"
     aria-label="Program overview"
-    [attr.aria-busy]="loading"
+    [attr.aria-busy]="loading()"
   >
-    @for (stat of stats; track stat.label) {
+    @for (stat of stats(); track stat.label) {
       <mat-card class="stat-card">
         <span class="stat-icon" [class]="'stat-icon ' + stat.color">
           <mat-icon fontSet="material-symbols-outlined">{{ stat.icon }}</mat-icon>
@@ -30,10 +30,10 @@
     }
   </section>
 
-  @if (errorMessage) {
+  @if (errorMessage()) {
     <div class="dashboard-error" role="alert">
-    <span>{{ errorMessage }}</span>
-    <button type="button" (click)="loadStats()">Retry</button>
+      <span>{{ errorMessage() }}</span>
+      <button type="button" (click)="loadStats()">Retry</button>
     </div>
   }
 
