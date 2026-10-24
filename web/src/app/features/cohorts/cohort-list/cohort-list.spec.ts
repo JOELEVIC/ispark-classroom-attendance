@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -240,6 +241,50 @@ describe('CohortList', () => {
       endDate: '2026-12-31',
     });
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Cohort B');
+  });
+
+  it('shows the API reason when cohort creation fails', async () => {
+    api.create.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: {
+              detail:
+                "A cohort named 'Cohort A' already exists in this program. Choose a different name.",
+            },
+          }),
+      ),
+    );
+    const buttons = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'));
+    buttons.find((button) => button.textContent?.includes('New Cohort'))?.click();
+    fixture.detectChanges();
+
+    const input = fixture.nativeElement.querySelector(
+      'input[placeholder="e.g. Cohort C"]',
+    ) as HTMLInputElement;
+    input.value = 'Cohort A';
+    input.dispatchEvent(new Event('input'));
+    const dateInputs = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLInputElement>(
+        'input[type="date"]',
+      ),
+    );
+    dateInputs[0].value = '2026-07-01';
+    dateInputs[0].dispatchEvent(new Event('input'));
+    dateInputs[1].value = '2026-12-31';
+    dateInputs[1].dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Create Cohort'))
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      "A cohort named 'Cohort A' already exists in this program. Choose a different name.",
+    );
   });
 
   it('logs directory errors and shows a concise message', async () => {

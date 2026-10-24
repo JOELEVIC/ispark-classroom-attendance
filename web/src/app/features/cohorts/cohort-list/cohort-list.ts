@@ -239,14 +239,24 @@ export class CohortList {
   }
 
   protected createCohort(): void {
-    if (
-      this.createProgramId === null ||
-      this.cohortName.trim().length < 2 ||
-      !this.startDate ||
-      !this.endDate ||
-      this.endDate <= this.startDate
-    ) {
-      this.errorMessage = 'Choose a program, enter a cohort name, and select a valid date range.';
+    if (this.createProgramId === null) {
+      this.errorMessage = 'Choose a program for this cohort.';
+      return;
+    }
+    if (this.cohortName.trim().length < 2) {
+      this.errorMessage = 'Cohort name must be at least 2 characters.';
+      return;
+    }
+    if (this.cohortName.trim().length > 150) {
+      this.errorMessage = 'Cohort name must be 150 characters or fewer.';
+      return;
+    }
+    if (!this.startDate || !this.endDate) {
+      this.errorMessage = 'Choose both a start date and an end date.';
+      return;
+    }
+    if (this.endDate <= this.startDate) {
+      this.errorMessage = 'End date must be after start date.';
       return;
     }
 
@@ -277,10 +287,58 @@ export class CohortList {
       },
       error: (error: unknown) => {
         console.error('Failed to create cohort', error);
-        this.errorMessage = "Couldn't create cohort. Please try again.";
+        this.errorMessage = this.getCohortCreationError(error);
         this.submitting.set(false);
       },
     });
+  }
+
+  private getCohortCreationError(error: unknown): string {
+    const fallback = "Couldn't create cohort. Please try again.";
+    if (!(error instanceof HttpErrorResponse)) {
+      return fallback;
+    }
+
+    const detail: unknown = error.error?.detail;
+    if (typeof detail === 'string') {
+      return detail;
+    }
+    if (!Array.isArray(detail)) {
+      return fallback;
+    }
+
+    const fieldLabels: Record<string, string> = {
+      end_date: 'End date',
+      name: 'Cohort name',
+      program_id: 'Program',
+      start_date: 'Start date',
+    };
+    const messages = detail
+      .map((issue: unknown) => {
+        if (!issue || typeof issue !== 'object') {
+          return null;
+        }
+        const validationIssue = issue as { loc?: unknown; msg?: unknown; type?: unknown };
+        const field = Array.isArray(validationIssue.loc) ? validationIssue.loc.at(-1) : undefined;
+        const message = typeof validationIssue.msg === 'string' ? validationIssue.msg : '';
+        if (field === 'name' && validationIssue.type === 'string_too_short') {
+          return 'Cohort name must be at least 2 characters.';
+        }
+        if (field === 'name' && validationIssue.type === 'string_too_long') {
+          return 'Cohort name must be 150 characters or fewer.';
+        }
+        if (field === 'program_id') {
+          return 'Choose an existing program.';
+        }
+        if (message.startsWith('Value error, ')) {
+          return message.slice('Value error, '.length);
+        }
+        const label = typeof field === 'string' ? fieldLabels[field] : undefined;
+        return message ? (label ? `${label}: ${message}.` : message) : null;
+      })
+      .filter((message): message is string => message !== null);
+
+    return messages.length ? messages.join(' ') : fallback;
   }
 
   protected assignTrainer(): void {

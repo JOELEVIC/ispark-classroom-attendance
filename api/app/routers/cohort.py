@@ -28,9 +28,28 @@ def create_cohort(payload: CohortCreate):
             payload.end_date,
         )
     except IntegrityError as exc:
+        constraint_name = exc.diag.constraint_name
+        response_status = status.HTTP_409_CONFLICT
+        if constraint_name == "cohorts_unique_name_per_program":
+            detail = (
+                f"A cohort named '{payload.name}' already exists in this "
+                "program. Choose a different name."
+            )
+        elif constraint_name == "cohorts_program_id_fkey":
+            detail = "The selected program does not exist. Choose an existing program."
+            response_status = status.HTTP_404_NOT_FOUND
+        elif constraint_name == "cohorts_end_date_constraint":
+            detail = "End date must be after start date."
+        elif constraint_name == "cohorts_name_check":
+            detail = "Cohort name must contain between 2 and 150 non-space characters."
+        else:
+            detail = (
+                "The cohort could not be created because its details conflict "
+                "with existing data."
+            )
         raise HTTPException(
-            status_code=409,
-            detail="Could not create cohort. Check the program and cohort constraints.",
+            status_code=response_status,
+            detail=detail,
         ) from exc
 
 
