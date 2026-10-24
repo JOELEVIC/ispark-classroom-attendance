@@ -164,3 +164,14 @@ If there were more time, next steps would be:
   pagination.
 - Add a global search button that opens a modal for searching across the app.
 - Add class material creation.
+
+## AI-Assisted Development
+
+AI assistance supported implementation and review across:
+
+- Database constraints and application validation.
+- Repository and router logic, UI components, and performance improvements.
+- Tests, troubleshooting, and deployment documentation.
+
+Suggestions were reviewed against the project requirements and architecture;
+implementation, testing, and deployment decisions remained developer-led.

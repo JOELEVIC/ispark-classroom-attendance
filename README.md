@@ -159,3 +159,9 @@ Run frontend tests and build from `web`:
 npm test -- --watch=false
 npm run build
 ```
+## AI Assistance
+
+AI assistance supported database constraints and validation, repository and
+router logic, UI development, performance improvements, testing, and deployment
+documentation. Suggestions were reviewed against project requirements;
+implementation and verification remained developer-led.
