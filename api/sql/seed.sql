@@ -18,6 +18,9 @@ DECLARE
     jane_id BIGINT;
     samuel_id BIGINT;
     amara_id BIGINT;
+    ava_id BIGINT;
+    sample_attendance_id BIGINT;
+    seed_trainee_ids BIGINT[] := ARRAY[]::BIGINT[];
     trainee_name TEXT;
     trainee_id BIGINT;
     class_row RECORD;
@@ -159,12 +162,17 @@ BEGIN
             VALUES (trainee_name)
             RETURNING id INTO trainee_id;
         END IF;
+        seed_trainee_ids := array_append(seed_trainee_ids, trainee_id);
+        IF trainee_name = 'Ava Johnson' THEN
+            ava_id := trainee_id;
+        END IF;
     END LOOP;
 
     INSERT INTO enrollments (cohort_id, trainee_id)
     SELECT backend_cohort_3_id, id
     FROM trainees
-    WHERE name IN (
+    WHERE id = ANY(seed_trainee_ids)
+      AND name IN (
         'Ava Johnson', 'Noah Williams', 'Mia Brown',
         'Ethan Davis', 'Zoe Wilson'
     )
@@ -173,7 +181,8 @@ BEGIN
     INSERT INTO enrollments (cohort_id, trainee_id)
     SELECT backend_cohort_4_id, id
     FROM trainees
-    WHERE name IN (
+    WHERE id = ANY(seed_trainee_ids)
+      AND name IN (
         'Liam Garcia', 'Emma Martinez', 'Oliver Anderson',
         'Sophia Thomas', 'Lucas Taylor'
     )
@@ -182,7 +191,8 @@ BEGIN
     INSERT INTO enrollments (cohort_id, trainee_id)
     SELECT frontend_cohort_1_id, id
     FROM trainees
-    WHERE name IN (
+    WHERE id = ANY(seed_trainee_ids)
+      AND name IN (
         'Ava Johnson', 'Isabella Moore', 'Mason Jackson',
         'Harper Martin', 'Elijah Lee', 'Chloe Thompson'
     )
@@ -237,61 +247,84 @@ BEGIN
         cc.cohort_id,
         e.trainee_id,
         CASE
-            WHEN cc.cohort_id = backend_cohort_3_id
-             AND cc.topic = 'API Foundations'
-             AND t.name = 'Ava Johnson'
-                THEN 'PRESENT'
-            ELSE CASE MOD(cc.id + e.trainee_id, 4)
-                WHEN 0 THEN 'PRESENT'
-                WHEN 1 THEN 'LATE'
-                WHEN 2 THEN 'ABSENT'
-                ELSE 'EXCUSED'
-            END
+            WHEN MOD(cc.id + e.trainee_id, 4) = 0 THEN 'PRESENT'
+            WHEN MOD(cc.id + e.trainee_id, 4) = 1 THEN 'LATE'
+            WHEN MOD(cc.id + e.trainee_id, 4) = 2 THEN 'ABSENT'
+            ELSE 'EXCUSED'
         END,
         cc.trainer_id,
         cc.trainer_id
     FROM cohort_classes AS cc
     JOIN enrollments AS e ON e.cohort_id = cc.cohort_id
     JOIN trainees AS t ON t.id = e.trainee_id
+                       AND e.trainee_id = ANY(seed_trainee_ids)
     WHERE (
         (cc.cohort_id = backend_cohort_3_id
+            AND cc.class_date IN (
+                DATE '2024-09-10', DATE '2024-10-01',
+                DATE '2024-11-05', DATE '2024-12-03'
+            )
             AND cc.topic IN (
                 'API Foundations', 'Data Modeling',
                 'RESTful Services', 'Testing APIs'
             ))
         OR (cc.cohort_id = backend_cohort_4_id
+            AND cc.class_date IN (
+                DATE '2025-02-11', DATE '2025-03-11',
+                DATE '2025-04-08', DATE '2025-05-06'
+            )
             AND cc.topic IN (
                 'Python Services', 'SQL and Transactions',
                 'Authentication Design', 'Deployment Workshop'
             ))
         OR (cc.cohort_id = frontend_cohort_1_id
+            AND cc.class_date IN (
+                DATE '2025-01-21', DATE '2025-02-18',
+                DATE '2025-03-18', DATE '2025-04-15'
+            )
             AND cc.topic IN (
                 'HTML and Accessibility', 'CSS Layout',
                 'JavaScript Essentials', 'Frontend Project'
             ))
     )
+      AND NOT (
+          cc.cohort_id = backend_cohort_3_id
+          AND cc.topic = 'API Foundations'
+          AND e.trainee_id = ava_id
+      )
     ON CONFLICT ON CONSTRAINT attendance_one_record_per_trainee_per_class
     DO NOTHING;
 
-    UPDATE attendance AS a
-    SET status = CASE
-            WHEN a.status = 'LATE' THEN 'PRESENT'
-            ELSE 'LATE'
-        END,
-        last_changed_by = cc.trainer_id
+    INSERT INTO attendance (
+        class_id,
+        cohort_id,
+        trainee_id,
+        status,
+        recorded_by,
+        last_changed_by
+    )
+    SELECT
+        cc.id,
+        cc.cohort_id,
+        ava_id,
+        'PRESENT',
+        cc.trainer_id,
+        cc.trainer_id
     FROM cohort_classes AS cc
-    JOIN enrollments AS e ON e.cohort_id = cc.cohort_id
-    JOIN trainees AS t ON t.id = e.trainee_id
-    WHERE a.class_id = cc.id
-      AND a.trainee_id = e.trainee_id
-      AND cc.cohort_id = backend_cohort_3_id
+    WHERE cc.cohort_id = backend_cohort_3_id
+      AND cc.class_date = DATE '2024-09-10'
       AND cc.topic = 'API Foundations'
-      AND t.name = 'Ava Johnson'
-      AND NOT EXISTS (
-          SELECT 1
-          FROM attendance_change_history AS history
-          WHERE history.attendance_id = a.id
-      );
+    ON CONFLICT ON CONSTRAINT attendance_one_record_per_trainee_per_class
+    DO NOTHING
+    RETURNING id INTO sample_attendance_id;
+
+    IF sample_attendance_id IS NOT NULL THEN
+        UPDATE attendance AS a
+        SET status = 'LATE', last_changed_by = cc.trainer_id
+        FROM cohort_classes AS cc
+        WHERE a.id = sample_attendance_id
+          AND cc.id = a.class_id;
+    END IF;
 END;
 $$;
 
