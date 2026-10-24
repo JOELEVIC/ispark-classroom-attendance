@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSelectHarness } from '@angular/material/select/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { EnrollmentApiService, EnrollmentCohort } from './enrollment-api.service';
 import { EnrollmentList } from './enrollment-list';
@@ -49,7 +50,7 @@ describe('EnrollmentList', () => {
     };
     await TestBed.configureTestingModule({
       imports: [EnrollmentList],
-      providers: [{ provide: EnrollmentApiService, useValue: api }],
+      providers: [provideRouter([]), { provide: EnrollmentApiService, useValue: api }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(EnrollmentList);
@@ -63,6 +64,15 @@ describe('EnrollmentList', () => {
     expect(text).toContain('Ada Trainee');
     expect(text).toContain('1 enrolled');
     expect(text).not.toContain('All trainees are already enrolled.');
+  });
+
+  it('shows a back link to the selected cohort page', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '.back-button',
+    );
+
+    expect(link?.textContent).toContain('Back to Cohorts');
+    expect(link?.getAttribute('href')).toBe('/cohorts?cohortId=10');
   });
 
   it('enrolls a trainee and updates the roster count', async () => {

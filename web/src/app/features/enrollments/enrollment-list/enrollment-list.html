@@ -5,6 +5,15 @@
       <h1>Enrollments</h1>
       <p class="page-intro">Manage which trainees belong to each cohort.</p>
     </div>
+    <a
+      mat-stroked-button
+      class="back-button"
+      [routerLink]="['/cohorts']"
+      [queryParams]="{ cohortId: selectedCohortId }"
+    >
+      <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+      Back to Cohorts
+    </a>
   </header>
 
   @if (loading()) {

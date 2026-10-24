@@ -1,4 +1,5 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +8,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  EnrollmentApiService,
+  EnrollmentImportResult,
+} from '../../enrollments/enrollment-list/enrollment-api.service';
 import {
   CohortApiService,
   CohortCreate,
@@ -26,6 +32,7 @@ import {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    RouterLink,
   ],
   selector: 'app-cohort-list',
   styleUrl: './cohort-list.css',
@@ -33,6 +40,8 @@ import {
 })
 export class CohortList {
   private readonly cohortApi = inject(CohortApiService);
+  private readonly enrollmentApi = inject(EnrollmentApiService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly programs = signal<CohortProgram[]>([]);
   protected readonly trainers = signal<CohortTrainer[]>([]);
   protected readonly trainees = signal<CohortTrainee[]>([]);
@@ -40,6 +49,8 @@ export class CohortList {
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
   protected readonly submitting = signal(false);
+  protected readonly importingCsv = signal(false);
+  protected readonly csvImportResult = signal<EnrollmentImportResult | null>(null);
   protected programFilterId: number | null = null;
   protected selectedCohortId: number | null = null;
   protected createProgramId: number | null = null;
@@ -51,6 +62,9 @@ export class CohortList {
   protected endDate = '';
   protected errorMessage = '';
   protected successMessage = '';
+  protected csvImportError = '';
+  protected selectedCsv: File | null = null;
+  private csvFileInput: HTMLInputElement | null = null;
 
   constructor() {
     this.loadDirectory();
@@ -93,7 +107,10 @@ export class CohortList {
           this.createProgramId = programs[0]?.id ?? null;
         }
         if (!cohorts.some((cohort) => cohort.id === this.selectedCohortId)) {
-          this.selectedCohortId = cohorts[0]?.id ?? null;
+          const requestedCohortId = Number(this.route.snapshot.queryParamMap.get('cohortId'));
+          this.selectedCohortId = cohorts.some((cohort) => cohort.id === requestedCohortId)
+            ? requestedCohortId
+            : (cohorts[0]?.id ?? null);
         }
         this.onProgramChange();
         this.loading.set(false);
@@ -114,6 +131,7 @@ export class CohortList {
     ) {
       this.selectedCohortId = this.filteredCohorts[0]?.id ?? null;
       this.clearAssignmentSelections();
+      this.clearCsvImport();
     }
   }
 
@@ -124,6 +142,50 @@ export class CohortList {
       this.clearAssignmentSelections();
     }
     this.errorMessage = '';
+    this.clearCsvImport();
+  }
+
+  protected onCsvSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.csvFileInput = input;
+    this.selectedCsv = input.files?.[0] ?? null;
+    this.csvImportResult.set(null);
+    this.csvImportError = '';
+  }
+
+  protected importCsv(): void {
+    const cohort = this.selectedCohort;
+    const file = this.selectedCsv;
+    if (!cohort || !file) {
+      return;
+    }
+
+    this.csvImportError = '';
+    this.csvImportResult.set(null);
+    this.importingCsv.set(true);
+    this.enrollmentApi.importCsv(cohort.id, file).subscribe({
+      next: (result) => {
+        if (this.selectedCohortId === cohort.id) {
+          this.csvImportResult.set(result);
+          this.loadDirectory();
+        }
+        this.selectedCsv = null;
+        if (this.csvFileInput) {
+          this.csvFileInput.value = '';
+        }
+        this.importingCsv.set(false);
+      },
+      error: (error: unknown) => {
+        console.error('Failed to import cohort enrollment CSV', error);
+        if (this.selectedCohortId === cohort.id) {
+          this.csvImportError =
+            error instanceof HttpErrorResponse && typeof error.error?.detail === 'string'
+              ? error.error.detail
+              : "Couldn't import the CSV. Please check the file and try again.";
+        }
+        this.importingCsv.set(false);
+      },
+    });
   }
 
   protected openCreateForm(): void {
@@ -251,5 +313,15 @@ export class CohortList {
   private clearAssignmentSelections(): void {
     this.selectedTrainerId = null;
     this.selectedTraineeId = null;
+  }
+
+  private clearCsvImport(): void {
+    this.selectedCsv = null;
+    if (this.csvFileInput) {
+      this.csvFileInput.value = '';
+    }
+    this.csvFileInput = null;
+    this.csvImportResult.set(null);
+    this.csvImportError = '';
   }
 }

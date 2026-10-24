@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSelectHarness } from '@angular/material/select/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { EnrollmentApiService } from '../../enrollments/enrollment-list/enrollment-api.service';
 import { CohortApiService, CohortRecord } from './cohort-api.service';
 import { CohortList } from './cohort-list';
 
@@ -12,6 +14,7 @@ describe('CohortList', () => {
     create: ReturnType<typeof vi.fn>;
     assignTrainer: ReturnType<typeof vi.fn>;
     enrollTrainee: ReturnType<typeof vi.fn>;
+    importCsv: ReturnType<typeof vi.fn>;
   };
 
   const cohorts: CohortRecord[] = [
@@ -60,11 +63,28 @@ describe('CohortList', () => {
       ),
       assignTrainer: vi.fn().mockReturnValue(of({})),
       enrollTrainee: vi.fn().mockReturnValue(of({})),
+      importCsv: vi.fn().mockReturnValue(
+        of({
+          imported_count: 1,
+          total_rows: 2,
+          failures: [
+            {
+              row: 3,
+              name: 'Unknown Trainee',
+              reason: 'No existing trainee has this exact name.',
+            },
+          ],
+        }),
+      ),
     };
 
     await TestBed.configureTestingModule({
       imports: [CohortList],
-      providers: [{ provide: CohortApiService, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: CohortApiService, useValue: api },
+        { provide: EnrollmentApiService, useValue: api },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CohortList);
@@ -80,6 +100,15 @@ describe('CohortList', () => {
     expect(text).toContain('3 Classes');
     expect(text).toContain('Ada Trainer');
     expect(text).toContain('Sam Trainee');
+  });
+
+  it('links the selected cohort to its enrollment page', () => {
+    const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '.enrollment-page-link',
+    );
+
+    expect(link?.textContent).toContain('Enrollment page');
+    expect(link?.getAttribute('href')).toBe('/enrollments?cohortId=10');
   });
 
   it('enrolls a trainee and updates the cohort details', async () => {
@@ -112,6 +141,34 @@ describe('CohortList', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain(
       'Jo Trainee enrolled in Cohort A.',
     );
+  });
+
+  it('imports CSV enrollments for the selected cohort and reports failed rows', async () => {
+    const input = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+      '#cohort-csv-10',
+    );
+    expect(input).not.toBeNull();
+    if (!input) {
+      return;
+    }
+    const file = new File(['name\nJo Trainee\nUnknown Trainee\n'], 'trainees.csv', {
+      type: 'text/csv',
+    });
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.csv-import-button')
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(api.importCsv).toHaveBeenCalledWith(10, file);
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Enrolled 1 of 2 CSV rows.');
+    expect(text).toContain('Row 3');
+    expect(text).toContain('No existing trainee has this exact name.');
   });
 
   it('creates a cohort through the API', async () => {

@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   EnrolledTrainee,
   EnrollmentApiService,
@@ -21,6 +22,7 @@ import {
     MatFormFieldModule,
     MatIconModule,
     MatSelectModule,
+    RouterLink,
   ],
   selector: 'app-enrollment-list',
   styleUrl: './enrollment-list.css',
@@ -28,6 +30,7 @@ import {
 })
 export class EnrollmentList {
   private readonly enrollmentApi = inject(EnrollmentApiService);
+  private readonly route = inject(ActivatedRoute);
   protected readonly cohorts = signal<EnrollmentCohort[]>([]);
   protected readonly trainees = signal<EnrolledTrainee[]>([]);
   protected readonly loading = signal(true);
@@ -36,6 +39,7 @@ export class EnrollmentList {
   protected readonly importing = signal(false);
   protected readonly importResult = signal<EnrollmentImportResult | null>(null);
   protected selectedCohortId: number | null = null;
+  protected readonly sourceCohortId: number | null;
   protected selectedTraineeId: number | null = null;
   protected selectedCsv: File | null = null;
   protected errorMessage = '';
@@ -43,6 +47,10 @@ export class EnrollmentList {
   protected importError = '';
 
   constructor() {
+    const requestedCohortId = Number(this.route.snapshot.queryParamMap.get('cohortId'));
+    this.sourceCohortId =
+      Number.isInteger(requestedCohortId) && requestedCohortId > 0 ? requestedCohortId : null;
+    this.selectedCohortId = this.sourceCohortId;
     this.loadDirectory();
   }
 

@@ -9,6 +9,10 @@
 }
 
 .page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
@@ -31,6 +35,14 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
+}
+
+.back-button {
+  min-height: 42px;
+  border-radius: 9px;
+  color: #1875e5 !important;
+  border-color: #c9dcf4;
+  white-space: nowrap;
 }
 
 .enrollment-layout {
@@ -305,6 +317,10 @@
 }
 
 @media (max-width: 520px) {
+  .page-heading {
+    align-items: flex-start;
+  }
+
   .enrollment-form,
   .roster-card {
     padding: 17px;

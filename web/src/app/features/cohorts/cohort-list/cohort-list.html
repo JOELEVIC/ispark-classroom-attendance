@@ -123,6 +123,15 @@
 
           <div class="section-heading">
             <h3>Enrolled trainees</h3>
+            <a
+              mat-stroked-button
+              class="enrollment-page-link"
+              [routerLink]="['/enrollments']"
+              [queryParams]="{ cohortId: cohort.id }"
+            >
+              <mat-icon fontSet="material-symbols-outlined">open_in_new</mat-icon>
+              Enrollment page
+            </a>
           </div>
           @for (trainee of cohort.trainees; track trainee.id) {
             <div class="person-row">
@@ -159,6 +168,56 @@
           } @else {
             <p class="muted">All trainees are already enrolled.</p>
           }
+
+          <section class="csv-enrollment" aria-labelledby="csv-enrollment-heading">
+            <h3 id="csv-enrollment-heading">Enroll trainees from CSV</h3>
+            <p class="muted">Choose a CSV with one column headed <code>name</code>.</p>
+            <label class="csv-file-label" [attr.for]="'cohort-csv-' + cohort.id">
+              Select CSV file
+            </label>
+            <input
+              [id]="'cohort-csv-' + cohort.id"
+              type="file"
+              accept=".csv,text/csv"
+              (change)="onCsvSelected($event)"
+            />
+            @if (selectedCsv) {
+              <p class="csv-selected-file">{{ selectedCsv.name }}</p>
+            }
+            <button
+              mat-stroked-button
+              type="button"
+              class="csv-import-button"
+              [disabled]="!selectedCsv || importingCsv()"
+              (click)="importCsv()"
+            >
+              <mat-icon fontSet="material-symbols-outlined">upload</mat-icon>
+              {{ importingCsv() ? 'Importing...' : 'Import CSV' }}
+            </button>
+            @if (csvImportError) {
+              <p class="error-message" role="alert">{{ csvImportError }}</p>
+            }
+            @if (csvImportResult(); as result) {
+              <div class="csv-import-result" role="status">
+                <p>
+                  Enrolled {{ result.imported_count }} of {{ result.total_rows }}
+                  CSV rows.
+                </p>
+                @if (result.failures.length) {
+                  <h4>Rows not imported</h4>
+                  <ul>
+                    @for (failure of result.failures; track failure.row) {
+                      <li>
+                        <strong>Row {{ failure.row }}</strong>
+                        <span>{{ failure.name || 'Blank name' }}</span>
+                        <span>{{ failure.reason }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+          </section>
 
           <div class="section-heading">
             <h3>Assigned trainers</h3>
