@@ -75,7 +75,7 @@ describe('CohortList', () => {
             {
               row: 3,
               name: 'Unknown Trainee',
-              reason: 'No existing trainee has this exact name.',
+              reason: 'More than one trainee has this exact name.',
             },
           ],
         }),
@@ -204,7 +204,7 @@ describe('CohortList', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Enrolled 1 of 2 CSV rows.');
     expect(text).toContain('Row 3');
-    expect(text).toContain('No existing trainee has this exact name.');
+    expect(text).toContain('More than one trainee has this exact name.');
     expect(
       (fixture.nativeElement as HTMLElement).querySelectorAll(
         '.csv-failure-icon[aria-label="Import issue"]',

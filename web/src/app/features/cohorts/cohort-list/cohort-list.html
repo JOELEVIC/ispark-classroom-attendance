@@ -225,7 +225,10 @@
           @if (!cohort.isFinished) {
             <section class="csv-enrollment" aria-labelledby="csv-enrollment-heading">
               <h3 id="csv-enrollment-heading">Enroll trainees from CSV</h3>
-              <p class="muted">Choose a CSV with one column headed <code>name</code>.</p>
+              <p class="muted">
+                Use one <code>name</code> column. Unmatched names create trainees; already-enrolled
+                and ambiguous names are reported.
+              </p>
               <label class="csv-file-label" [attr.for]="'cohort-csv-' + cohort.id">
                 Select CSV file
               </label>
