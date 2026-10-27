@@ -1,5 +1,6 @@
 from app.db.connection import get_db_connection
 from app.repositories.cohort_repository import lock_active_cohort
+from datetime import date
 
 
 class TrainerNotAssignedToClassError(Exception):
@@ -145,3 +146,28 @@ def get_trainee_attendance_history(
         with conn.cursor() as cur:
             cur.execute(query, (trainee_id, cohort_id))
             return cur.fetchall()
+
+def validate_class_attendance_date_within_cohort(cohort_id, class_id, attendance_date = None):
+      if attendance_date is None:
+          attendance_date = date.today()
+
+        #   rejecting if the cohort_class.class_date is  today
+      query = """
+            SELECT 1
+            FROM cohort_classes
+            WHERE cohort_id = %s
+            AND 
+               id = %s
+              AND 
+               class_date > %s;
+        """
+      
+      with get_db_connection() as conn:
+          with conn.cursor() as cur:
+              cur.execute(query, (cohort_id, class_id, attendance_date))
+              if cur.fetchone():
+                  raise ValueError(
+                      f"Cannot set attendance for future dates."
+                  )              
+              
+              

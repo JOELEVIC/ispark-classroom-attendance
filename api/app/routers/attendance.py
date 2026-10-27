@@ -26,7 +26,9 @@ def record_class_attendance(
     cohort_id: int = Query(gt=0),
     trainer_id: int = Query(gt=0),
 ):
+    
     try:
+        attendance_repository.validate_class_attendance_date_within_cohort(cohort_id,class_id)
         results = attendance_repository.record_attendance_batch(
             class_id=class_id,
             cohort_id=cohort_id,
@@ -44,6 +46,11 @@ def record_class_attendance(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only the trainer assigned to this class can record attendance.",
         ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        )
     except IntegrityError as exc:
         raise HTTPException(
             status_code=409,

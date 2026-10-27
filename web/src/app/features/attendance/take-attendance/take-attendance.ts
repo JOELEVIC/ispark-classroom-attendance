@@ -247,10 +247,11 @@ export class TakeAttendance implements OnInit {
             this.loadChangeHistory(expandedTraineeId);
           }
         },
-        error: (error: unknown) => {
+        error: (error: any) => {
           console.error('Failed to save attendance', error);
-          this.errorMessage =
-            "Couldn't save attendance. Please try again.";
+          let msg = error?.error?.detail? error.error.detail : "Couldn't save attendance. Please try again."
+          this.errorMessage =  msg
+            
           this.submitting.set(false);
         },
       });
